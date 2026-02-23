@@ -2,7 +2,7 @@ import React from 'react'
 
 const page = () => {
   return (
-    <div>Admin Dashboard</div>
+    <div>Group details + members</div>
   )
 }
 
