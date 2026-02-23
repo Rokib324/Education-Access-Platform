@@ -2,7 +2,7 @@ import React from 'react'
 
 const page = () => {
   return (
-    <div>Posts list</div>
+    <div>forum Posts list</div>
   )
 }
 
