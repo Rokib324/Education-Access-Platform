@@ -11,108 +11,30 @@ export const Navbar = () => {
 
 
   return (
-    <nav className="flex justify-between items-center py-4">
-        {/* Left Side */}
-      <div className="flex-3/5 flex items-center gap-12.5">
-        <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-1">
-            <Image
-              src="/renthomeLogo.png"
-              alt="Logo"
-              width={80}
-              height={40}
-            ></Image>
-            <span className="text-2xl font-medium hidden lg:block">
-              RentHomeBD
-            </span>
-          </Link>
-        </div>
-        <div className="items-center gap-10 hidden md:flex">
-          <Link
-            href="/"
-            className="transition-all duration-300 ease-in hover:scale-105"
-          >
-            Home
-          </Link>
-          <Link
-            href="/"
-            className="transition-all duration-300 ease-in hover:scale-105"
-          >
-            About
-          </Link>
-          <Link
-            href="/"
-            className="transition-all duration-300 ease-in hover:scale-105"
-          >
-            Contact
-          </Link>
-          <Link
-            href="/"
-            className="transition-all duration-300 ease-in hover:scale-105"
-          >
-            Agents
-          </Link>
-        </div>
+    <nav className="w-full h-16 flex items-center justify-between px-4 bg-gray-800 text-white">
+      <div className="flex items-center gap-2">
+       
+        <span className="font-bold text-lg">Education for Unpreviledged</span>
       </div>
-
-      {/* Right Side */}
-      <div className="flex-2/5  md:bg-[#fcf5f3] h-100% p-5 items-center justify-end flex gap-7">
-        <div className="hidden md:flex justify-end items-center gap-10">
-          <Link
-            href="/"
-            className="text-gray-900 transition-all duration-300 ease-in hover:scale-105"
-          >
-            Login
-          </Link>
-          <Link
-            href="/"
-            className="bg-yellow-200 py-2 px-4 border border-yellow-300 hover:bg-yellow-300 text-gray-900 transition-all duration-300 ease-in hover:scale-105"
-          >
-            Sign Up
-          </Link>
-        </div>
-        <div className="z-999">
-        <Image src="/menu.png" alt="Menu Icon" width={36} height={36} className="sm:hidden cursor-pointer" onClick={() => setOpenMenu((prev) => !prev)}></Image>
-        </div>
-        <div className={`absolute bg-black sm:hidden text-white text-lg h-screen w-[50%] top-0 transition-all duration-300 flex flex-col items-center justify-center gap-15 ${openMenu ? 'right-0' : 'right-[-50%]'}`}>
-            <Link
-            href="/"
-            className="transition-all duration-300 ease-in hover:scale-105"
-          >
-            Home
-          </Link>
-          <Link
-            href="/"
-            className="transition-all duration-300 ease-in hover:scale-105"
-          >
-            About
-          </Link>
-          <Link
-            href="/"
-            className="transition-all duration-300 ease-in hover:scale-105"
-          >
-            Contact
-          </Link>
-          <Link
-            href="/"
-            className="transition-all duration-300 ease-in hover:scale-105"
-          >
-            Agents
-          </Link>
-          <Link
-            href="/"
-            className="transition-all duration-300 ease-in hover:scale-105"
-          >
-            Login
-          </Link>
-          <Link
-            href="/"
-            className="transition-all duration-300 ease-in hover:scale-105"
-          >
-            Sign Up
-          </Link>
-        </div>
+      <div className="hidden md:flex items-center gap-4">
+        <Link href="/" className="hover:text-gray-400">Home</Link>
+        <Link href="/about" className="hover:text-gray-400">About</Link>
+        <Link href="/contact" className="hover:text-gray-400">Contact</Link>
       </div>
+      <div className="md:hidden">
+        <button onClick={() => setOpenMenu(!openMenu)} className="focus:outline-none">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h18M3 6h18M3 18h18" />
+          </svg>
+        </button>
+      </div>
+      {openMenu && (
+        <div className="absolute top-16 left-0 w-full bg-gray-800 text-white flex flex-col items-center gap-4 py-4 md:hidden">
+          <Link href="/" className="hover:text-gray-400" onClick={() => setOpenMenu(false)}>Home</Link>
+          <Link href="/about" className="hover:text-gray-400" onClick={() => setOpenMenu(false)}>About</Link>
+          <Link href="/contact" className="hover:text-gray-400" onClick={() => setOpenMenu(false)}>Contact</Link>
+        </div>
+      )}
     </nav>
   );
 };
