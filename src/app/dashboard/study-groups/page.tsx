@@ -1,9 +1,5 @@
-import React from 'react'
+import StudyGroupList from "@/components/study-groups";
 
-const page = () => {
-  return (
-    <div>Study Groups list</div>
-  )
+export default function StudyGroupsPage() {
+  return <StudyGroupList />;
 }
-
-export default page

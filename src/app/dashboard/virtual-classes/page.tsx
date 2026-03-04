@@ -1,9 +1,5 @@
-import React from 'react'
+import VirtualClassList from "@/components/virtual-classes";
 
-const page = () => {
-  return (
-    <div>List/schedule classes</div>
-  )
+export default function VirtualClassesPage() {
+  return <VirtualClassList />;
 }
-
-export default page

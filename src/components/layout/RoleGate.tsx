@@ -1,9 +1,25 @@
-import React from 'react'
+import React from "react";
+import { UserRole } from "./DashboardLayout";
 
-const RoleGate = () => {
-  return (
-    <div>RoleGate</div>
-  )
-}
+type RoleGateProps = {
+  allowedRoles: UserRole[];
+  currentRole: UserRole;
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+};
 
-export default RoleGate
+/**
+ * Renders `children` only when `currentRole` is in `allowedRoles`.
+ * Optionally renders `fallback` otherwise.
+ */
+const RoleGate: React.FC<RoleGateProps> = ({
+  allowedRoles,
+  currentRole,
+  children,
+  fallback = null,
+}) => {
+  if (!allowedRoles.includes(currentRole)) return <>{fallback}</>;
+  return <>{children}</>;
+};
+
+export default RoleGate;

@@ -7,11 +7,11 @@ import Navbar from "@/components/Navbar";
 
 export default function Home() {
   return (
-    <div>
+    <div className="min-h-screen bg-zinc-950">
       <Navbar />
       <Hero />
-      <Features/>
-      <HowItsWorks/>
+      <Features />
+      <HowItsWorks />
       <Footer />
     </div>
   );

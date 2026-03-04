@@ -1,9 +1,5 @@
-import React from 'react'
+import CourseList from "@/components/courses";
 
-const page = () => {
-  return (
-    <div>Browse / My courses</div>
-  )
+export default function CoursesPage() {
+  return <CourseList />;
 }
-
-export default page

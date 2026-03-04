@@ -1,9 +1,5 @@
-import React from 'react'
+import ResourceList from "@/components/resources";
 
-const page = () => {
-  return (
-    <div>Resource library</div>
-  )
+export default function ResourcesPage() {
+  return <ResourceList />;
 }
-
-export default page

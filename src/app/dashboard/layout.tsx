@@ -1,9 +1,10 @@
-import React from 'react'
+import React from "react";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 
-const layout = () => {
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div>Dashboard layout (sidebar + topbar)</div>
-  )
+    <DashboardLayout role="student" userName="Rakib Islam">
+      {children}
+    </DashboardLayout>
+  );
 }
-
-export default layout

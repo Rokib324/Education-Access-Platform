@@ -1,104 +1,189 @@
 import Link from "next/link";
+import {
+  BiLogoFacebook,
+  BiLogoTwitter,
+  BiLogoLinkedin,
+  BiLogoYoutube,
+} from "react-icons/bi";
+
+const PLATFORM_LINKS = [
+  { href: "/dashboard/courses", label: "Courses" },
+  { href: "/dashboard/virtual-classes", label: "Virtual Classes" },
+  { href: "/dashboard/resources", label: "Resources" },
+  { href: "/dashboard/study-groups", label: "Study Groups" },
+  { href: "/dashboard/forum", label: "Forums" },
+];
+
+const COMPANY_LINKS = [
+  { href: "/about", label: "About Us" },
+  { href: "/contact", label: "Contact" },
+  { href: "/", label: "Careers" },
+  { href: "/", label: "Blog" },
+  { href: "/", label: "Partnerships" },
+];
+
+const LEGAL_LINKS = [
+  { href: "/", label: "Privacy Policy" },
+  { href: "/", label: "Terms of Service" },
+  { href: "/", label: "Cookie Policy" },
+  { href: "/", label: "Accessibility" },
+];
+
+const SOCIAL = [
+  { icon: <BiLogoFacebook className="h-4 w-4" />, href: "#", label: "Facebook" },
+  { icon: <BiLogoTwitter className="h-4 w-4" />, href: "#", label: "Twitter" },
+  { icon: <BiLogoLinkedin className="h-4 w-4" />, href: "#", label: "LinkedIn" },
+  { icon: <BiLogoYoutube className="h-4 w-4" />, href: "#", label: "YouTube" },
+];
 
 const Footer = () => {
   return (
-    <footer className="border-t border-zinc-200 bg-white">
-      <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="grid gap-8 md:grid-cols-4">
-          {/* Brand */}
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="grid h-9 w-9 place-items-center rounded-lg bg-zinc-900 text-sm font-bold text-white">
-                EA
-              </span>
-              <span className="text-sm font-semibold text-zinc-900">
-                Education Access
+    <footer className="relative overflow-hidden border-t border-white/8 bg-zinc-950">
+      {/* Background glow */}
+      <div className="pointer-events-none absolute bottom-0 left-1/2 h-[300px] w-[600px] -translate-x-1/2 rounded-full bg-indigo-600/8 blur-[80px]" />
+
+      <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6">
+        <div className="grid gap-10 md:grid-cols-5">
+          {/* Brand col — spans 2 */}
+          <div className="md:col-span-2">
+            <div className="flex items-center gap-2.5">
+              <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/20">
+                <span className="text-sm font-extrabold text-white">EA</span>
+              </div>
+              <div className="leading-tight">
+                <p className="text-sm font-bold text-white">EduAccess</p>
+                <p className="text-[10px] text-zinc-500">
+                  For every learner
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-zinc-500">
+              Empowering underprivileged communities through accessible,
+              offline-ready education. Learn anywhere, grow everywhere.
+            </p>
+
+            {/* Social icons */}
+            <div className="mt-6 flex gap-2">
+              {SOCIAL.map((s) => (
+                <a
+                  key={s.label}
+                  href={s.href}
+                  aria-label={s.label}
+                  className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 text-zinc-400 transition-colors hover:bg-indigo-500/20 hover:text-indigo-300"
+                >
+                  {s.icon}
+                </a>
+              ))}
+            </div>
+
+            {/* Mission pill */}
+            <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+              <span className="text-xs text-indigo-300 font-medium">
+                Free for underprivileged learners
               </span>
             </div>
-            <p className="mt-3 text-sm text-zinc-600">
-              Empowering underprivileged communities through accessible, offline-ready education.
-            </p>
           </div>
 
           {/* Platform */}
           <div>
-            <p className="text-sm font-semibold text-zinc-900">Platform</p>
-            <ul className="mt-3 space-y-2 text-sm text-zinc-600">
-              <li>
-                <Link href="/courses" className="hover:text-zinc-900">
-                  Courses
-                </Link>
-              </li>
-              <li>
-                <Link href="/" className="hover:text-zinc-900">
-                  Virtual Classes
-                </Link>
-              </li>
-              <li>
-                <Link href="/" className="hover:text-zinc-900">
-                  Offline Learning
-                </Link>
-              </li>
-              <li>
-                <Link href="/" className="hover:text-zinc-900">
-                  Resources
-                </Link>
-              </li>
+            <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+              Platform
+            </p>
+            <ul className="mt-4 space-y-2.5">
+              {PLATFORM_LINKS.map((l) => (
+                <li key={l.label}>
+                  <Link
+                    href={l.href}
+                    className="text-sm text-zinc-400 transition-colors hover:text-white"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Company */}
           <div>
-            <p className="text-sm font-semibold text-zinc-900">Company</p>
-            <ul className="mt-3 space-y-2 text-sm text-zinc-600">
-              <li>
-                <Link href="/about" className="hover:text-zinc-900">
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="hover:text-zinc-900">
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link href="/" className="hover:text-zinc-900">
-                  Careers
-                </Link>
-              </li>
-              <li>
-                <Link href="/" className="hover:text-zinc-900">
-                  Blog
-                </Link>
-              </li>
+            <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+              Company
+            </p>
+            <ul className="mt-4 space-y-2.5">
+              {COMPANY_LINKS.map((l) => (
+                <li key={l.label}>
+                  <Link
+                    href={l.href}
+                    className="text-sm text-zinc-400 transition-colors hover:text-white"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Legal */}
           <div>
-            <p className="text-sm font-semibold text-zinc-900">Legal</p>
-            <ul className="mt-3 space-y-2 text-sm text-zinc-600">
-              <li>
-                <Link href="/" className="hover:text-zinc-900">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/" className="hover:text-zinc-900">
-                  Terms of Service
-                </Link>
-              </li>
+            <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+              Legal
+            </p>
+            <ul className="mt-4 space-y-2.5">
+              {LEGAL_LINKS.map((l) => (
+                <li key={l.label}>
+                  <Link
+                    href={l.href}
+                    className="text-sm text-zinc-400 transition-colors hover:text-white"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
+
+            {/* Newsletter mini */}
+            <div className="mt-6">
+              <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                Newsletter
+              </p>
+              <div className="mt-3 flex gap-2">
+                <input
+                  type="email"
+                  placeholder="Email address"
+                  className="flex-1 min-w-0 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+                <button className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-3 py-2 text-xs font-bold text-white hover:opacity-90 transition-opacity">
+                  →
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Bottom */}
-        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-zinc-200 pt-6 text-sm text-zinc-500 md:flex-row">
-          <p>© {new Date().getFullYear()} Education Access. All rights reserved.</p>
+        {/* Divider */}
+        <div className="mt-12 border-t border-white/8" />
+
+        {/* Bottom row */}
+        <div className="mt-6 flex flex-col items-center justify-between gap-4 text-xs text-zinc-600 md:flex-row">
+          <p>
+            © {new Date().getFullYear()} EduAccess. All rights reserved. Built
+            to bridge the education gap.
+          </p>
           <div className="flex items-center gap-4">
-            <Link href="#" className="hover:text-zinc-900">Facebook</Link>
-            <Link href="#" className="hover:text-zinc-900">Twitter</Link>
-            <Link href="#" className="hover:text-zinc-900">LinkedIn</Link>
+            <Link href="/" className="hover:text-zinc-400 transition-colors">
+              Privacy
+            </Link>
+            <Link href="/" className="hover:text-zinc-400 transition-colors">
+              Terms
+            </Link>
+            <Link href="/" className="hover:text-zinc-400 transition-colors">
+              Accessibility
+            </Link>
+            <span className="flex items-center gap-1 text-indigo-500">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-500" />
+              All systems operational
+            </span>
           </div>
         </div>
       </div>

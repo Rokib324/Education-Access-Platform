@@ -1,148 +1,214 @@
 import Link from "next/link";
-import { FaDownload, FaWifi, FaSyncAlt, FaVideo, FaCommentDots, FaCheckCircle } from "react-icons/fa";
+import {
+  BiDownload,
+  BiWifi,
+  BiRefresh,
+  BiDesktop,
+  BiMessageDetail,
+  BiCheckCircle,
+} from "react-icons/bi";
 
-const HowItsWorks = () => {
-  const steps = [
-    {
-      title: "Download lessons",
-      description:
-        "Save videos, notes, and quizzes to your device so students can learn anytime—no continuous internet needed.",
-      Icon: FaDownload,
-      badge: "Offline",
-    },
-    {
-      title: "Learn without internet",
-      description:
-        "Open downloaded content in low-connectivity areas. Progress is stored locally until the device reconnects.",
-      Icon: FaWifi,
-      badge: "Offline",
-    },
-    {
-      title: "Sync when online",
-      description:
-        "When the internet is available again, your lesson progress and quiz attempts sync back to your account.",
-      Icon: FaSyncAlt,
-      badge: "Sync",
-    },
-    {
-      title: "Join live classes",
-      description:
-        "Teachers schedule sessions and share meeting links. Students join on time to attend live lessons.",
-      Icon: FaVideo,
-      badge: "Live",
-    },
-    {
-      title: "Interact & collaborate",
-      description:
-        "Ask questions through chat and participate in discussions. Keep classes engaging even from remote areas.",
-      Icon: FaCommentDots,
-      badge: "Live",
-    },
-    {
-      title: "Attendance recorded",
-      description:
-        "Attendance is marked automatically when students join, or by the teacher during the session.",
-      Icon: FaCheckCircle,
-      badge: "Tracking",
-    },
-  ];
+const OFFLINE_STEPS = [
+  {
+    icon: <BiDownload className="h-5 w-5" />,
+    step: "01",
+    title: "Download Lessons",
+    desc: "Save video lessons, notes, and quizzes to your device with one tap — no ongoing connection needed.",
+    badge: "Offline",
+    badgeColor: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+  },
+  {
+    icon: <BiWifi className="h-5 w-5" />,
+    step: "02",
+    title: "Learn Anywhere",
+    desc: "Open downloaded content in the field, village, or low-signal zones. Everything works locally.",
+    badge: "Offline",
+    badgeColor: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+  },
+  {
+    icon: <BiRefresh className="h-5 w-5" />,
+    step: "03",
+    title: "Auto-Sync Progress",
+    desc: "When your device reconnects, all progress and quiz scores sync automatically — nothing is lost.",
+    badge: "Sync",
+    badgeColor: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  },
+];
 
+const LIVE_STEPS = [
+  {
+    icon: <BiDesktop className="h-5 w-5" />,
+    step: "04",
+    title: "Schedule Live Sessions",
+    desc: "Teachers create virtual classrooms, set a time, and share a secure meeting link instantly.",
+    badge: "Live",
+    badgeColor: "bg-red-500/20 text-red-400 border-red-500/30",
+  },
+  {
+    icon: <BiMessageDetail className="h-5 w-5" />,
+    step: "05",
+    title: "Interact & Collaborate",
+    desc: "Students join via video, ask questions through live chat, and engage in real-time discussions.",
+    badge: "Live",
+    badgeColor: "bg-red-500/20 text-red-400 border-red-500/30",
+  },
+  {
+    icon: <BiCheckCircle className="h-5 w-5" />,
+    step: "06",
+    title: "Attendance Tracked",
+    desc: "Attendance is automatically recorded when students join, giving teachers clear participation data.",
+    badge: "Tracking",
+    badgeColor: "bg-violet-500/20 text-violet-400 border-violet-500/30",
+  },
+];
+
+const HowItWorks = () => {
   return (
-    <section className="border-t border-zinc-200 bg-white">
-      <div className="mx-auto max-w-6xl px-4 py-14 md:py-20">
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+    <section className="relative overflow-hidden bg-zinc-900 py-20 md:py-28">
+      {/* Glows */}
+      <div className="pointer-events-none absolute left-0 top-1/2 h-[400px] w-[400px] -translate-y-1/2 rounded-full bg-emerald-600/10 blur-[100px]" />
+      <div className="pointer-events-none absolute right-0 top-1/2 h-[400px] w-[400px] -translate-y-1/2 rounded-full bg-red-600/10 blur-[100px]" />
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
+        {/* Header */}
+        <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <div className="max-w-2xl">
-            <p className="text-sm font-semibold text-zinc-700">How it works</p>
-            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-zinc-900 sm:text-3xl">
-              Offline-first learning + real-time classrooms.
+            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-zinc-400">
+              How it works
+            </span>
+            <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              Offline-first learning +{" "}
+              <span className="bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent">
+                real-time classrooms
+              </span>
             </h2>
-            <p className="mt-3 text-base text-zinc-600">
-              Designed for remote communities: learn offline, then connect for live teaching when possible.
+            <p className="mt-4 text-base text-zinc-400">
+              Designed for remote communities — learn offline when you need to,
+              then connect for live teaching when possible.
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex shrink-0 gap-2">
             <Link
-              href="/register"
-              className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+              href="/auth/register"
+              className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:opacity-90 transition-opacity"
             >
-              Get started
+              Get Started
             </Link>
             <Link
-              href="/courses"
-              className="rounded-md border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-800 hover:bg-zinc-50"
+              href="/dashboard/courses"
+              className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-semibold text-zinc-200 hover:bg-white/10 transition-colors"
             >
-              Browse courses
+              Browse Courses
             </Link>
           </div>
         </div>
 
-        {/* Steps */}
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {steps.map(({ title, description, Icon, badge }, idx) => (
-            <div
-              key={title}
-              className="rounded-2xl border border-zinc-200 bg-zinc-50 p-6"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="grid h-11 w-11 place-items-center rounded-xl bg-white text-zinc-900 shadow-sm shrink-0">
-                  <Icon size={24} />
-                </div>
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-zinc-700 shadow-sm">
-                  {badge}
-                </span>
-              </div>
-
-              <div className="mt-4">
-                <p className="text-xs font-semibold text-zinc-500">Step {idx + 1}</p>
-                <h3 className="mt-1 text-base font-semibold text-zinc-900">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-600">{description}</p>
-              </div>
+        {/* Two track layout */}
+        <div className="mt-14 grid gap-6 lg:grid-cols-2">
+          {/* Track 1: Offline */}
+          <div className="rounded-2xl border border-white/8 bg-zinc-950/60 p-6 backdrop-blur">
+            <div className="mb-6 flex items-center gap-2">
+              <div className="h-1 flex-1 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" />
+              <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">
+                Offline Flow
+              </span>
+              <div className="h-1 flex-1 rounded-full bg-gradient-to-l from-emerald-500 to-teal-500" />
             </div>
-          ))}
+            <div className="space-y-4">
+              {OFFLINE_STEPS.map((s) => (
+                <div
+                  key={s.step}
+                  className="flex items-start gap-4 rounded-xl border border-white/6 bg-white/3 p-4 transition-colors hover:bg-white/6"
+                >
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/20">
+                    {s.icon}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold tracking-widest text-zinc-600">
+                        STEP {s.step}
+                      </span>
+                      <span
+                        className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${s.badgeColor}`}
+                      >
+                        {s.badge}
+                      </span>
+                    </div>
+                    <h3 className="mt-0.5 text-sm font-bold text-white">
+                      {s.title}
+                    </h3>
+                    <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+                      {s.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Track 2: Live Classes */}
+          <div className="rounded-2xl border border-white/8 bg-zinc-950/60 p-6 backdrop-blur">
+            <div className="mb-6 flex items-center gap-2">
+              <div className="h-1 flex-1 rounded-full bg-gradient-to-r from-red-500 to-rose-500" />
+              <span className="text-xs font-bold uppercase tracking-widest text-red-400">
+                Live Classroom Flow
+              </span>
+              <div className="h-1 flex-1 rounded-full bg-gradient-to-l from-red-500 to-rose-500" />
+            </div>
+            <div className="space-y-4">
+              {LIVE_STEPS.map((s) => (
+                <div
+                  key={s.step}
+                  className="flex items-start gap-4 rounded-xl border border-white/6 bg-white/3 p-4 transition-colors hover:bg-white/6"
+                >
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/20">
+                    {s.icon}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold tracking-widest text-zinc-600">
+                        STEP {s.step}
+                      </span>
+                      <span
+                        className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${s.badgeColor}`}
+                      >
+                        {s.badge}
+                      </span>
+                    </div>
+                    <h3 className="mt-0.5 text-sm font-bold text-white">
+                      {s.title}
+                    </h3>
+                    <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+                      {s.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Two-column explanation */}
-        <div className="mt-10 grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-            <h3 className="text-base font-semibold text-zinc-900">Offline learning flow</h3>
-            <ol className="mt-4 space-y-3 text-sm text-zinc-600">
-              <li className="flex gap-3">
-                <span className="mt-0.5 h-2 w-2 rounded-full bg-zinc-900" />
-                Download lessons once and keep them on the device.
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-0.5 h-2 w-2 rounded-full bg-zinc-900" />
-                Learn offline and save progress locally.
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-0.5 h-2 w-2 rounded-full bg-zinc-900" />
-                Sync when internet returns—no data loss.
-              </li>
-            </ol>
+        {/* Bottom CTA strip */}
+        <div className="mt-10 flex flex-col items-center justify-between gap-5 rounded-2xl border border-indigo-500/20 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 px-8 py-6 text-center md:flex-row md:text-left">
+          <div>
+            <p className="text-base font-bold text-white">
+              Ready to bridge the education gap?
+            </p>
+            <p className="mt-1 text-sm text-zinc-400">
+              Join thousands of learners and teachers already on the platform.
+            </p>
           </div>
-
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-            <h3 className="text-base font-semibold text-zinc-900">Virtual classroom flow</h3>
-            <ol className="mt-4 space-y-3 text-sm text-zinc-600">
-              <li className="flex gap-3">
-                <span className="mt-0.5 h-2 w-2 rounded-full bg-zinc-900" />
-                Teacher schedules a session and shares the meeting link.
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-0.5 h-2 w-2 rounded-full bg-zinc-900" />
-                Students join, interact via chat, and participate.
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-0.5 h-2 w-2 rounded-full bg-zinc-900" />
-                Attendance is recorded for tracking and reporting.
-              </li>
-            </ol>
-          </div>
+          <Link
+            href="/auth/register"
+            className="shrink-0 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-xl shadow-indigo-500/20 hover:opacity-90 transition-opacity"
+          >
+            Start for Free →
+          </Link>
         </div>
       </div>
     </section>
   );
 };
 
-export default HowItsWorks;
+export default HowItWorks;

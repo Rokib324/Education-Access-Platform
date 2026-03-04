@@ -1,9 +1,5 @@
-import React from 'react'
+import ForumList from "@/components/forums";
 
-const page = () => {
-  return (
-    <div>Forums list</div>
-  )
+export default function ForumPage() {
+  return <ForumList />;
 }
-
-export default page
