@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { clearSessionCookie } from "@/lib/auth/sessions";
 
-export async function POST(req: Request) {
-  return NextResponse.json({ error: "Not implemented" }, { status: 501 });
+export async function POST() {
+  const response = NextResponse.json({ message: "Logged out successfully." });
+  clearSessionCookie(response);
+  return response;
 }

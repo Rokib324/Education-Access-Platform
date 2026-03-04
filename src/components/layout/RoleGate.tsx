@@ -1,5 +1,5 @@
 import React from "react";
-import { UserRole } from "./DashboardLayout";
+import type { UserRole } from "@/types/auth";
 
 type RoleGateProps = {
   allowedRoles: UserRole[];

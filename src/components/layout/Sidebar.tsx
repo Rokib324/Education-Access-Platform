@@ -16,7 +16,7 @@ import {
   BiShield,
   BiUser,
 } from "react-icons/bi";
-import { UserRole } from "./DashboardLayout";
+import type { UserRole } from "@/types/auth";
 import { useState } from "react";
 
 type NavItem = {
