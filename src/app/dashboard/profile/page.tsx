@@ -1,9 +1,5 @@
-import React from 'react'
+import ProfilePage from "@/components/profile";
 
-const page = () => {
-  return (
-    <div>Profile and settings</div>
-  )
+export default function Page() {
+  return <ProfilePage />;
 }
-
-export default page
