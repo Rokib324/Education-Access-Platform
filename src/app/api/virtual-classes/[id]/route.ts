@@ -16,7 +16,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const payload = getTokenFromRequest(req);
+        const payload = await getTokenFromRequest(req);
         if (!payload) return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
 
         const { id } = await params;

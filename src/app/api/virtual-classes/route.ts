@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const payload = getTokenFromRequest(req);
+        const payload = await getTokenFromRequest(req);
         if (!payload) return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
         if (!["teacher", "admin"].includes(payload.roleName)) {
             return NextResponse.json({ error: "Only teachers and admins can schedule classes." }, { status: 403 });

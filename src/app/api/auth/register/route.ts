@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     });
 
     // --- Sign JWT and set cookie ---
-    const token = signToken({
+    const token = await signToken({
       userId: (user._id as unknown as string).toString(),
       roleId: (roleDoc._id as unknown as string).toString(),
       roleName: roleDoc.role_name,

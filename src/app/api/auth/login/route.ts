@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
       email: email.toLowerCase().trim(),
     }).populate("role_id");
 
+    console.log("Login user found:", user ? user.email : "none");
+
     if (!user) {
       return NextResponse.json(
         { error: "Invalid email or password." },
@@ -31,7 +33,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify password
+    console.log("Checking password for:", user.email);
+    console.log("Stored hash:", user.password_hash ? "exists" : "missing");
     const isValid = await verifyPassword(password, user.password_hash);
+    console.log("Password valid:", isValid);
+
     if (!isValid) {
       return NextResponse.json(
         { error: "Invalid email or password." },
@@ -43,7 +49,7 @@ export async function POST(req: NextRequest) {
     const role = user.role_id as any;
 
     // Sign JWT and set cookie
-    const token = signToken({
+    const token = await signToken({
       userId: (user._id as unknown as string).toString(),
       roleId: role._id.toString(),
       roleName: role.role_name,

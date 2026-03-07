@@ -5,7 +5,7 @@ import { getTokenFromRequest } from "@/lib/auth/sessions";
 
 export async function GET(req: NextRequest) {
   try {
-    const payload = getTokenFromRequest(req);
+    const payload = await getTokenFromRequest(req);
 
     if (!payload) {
       return NextResponse.json(

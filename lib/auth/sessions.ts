@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -14,21 +14,28 @@ export interface JWTPayload {
     fullName: string;
 }
 
+const JWT_SECRET_KEY = new TextEncoder().encode(JWT_SECRET);
+
 /**
  * Sign a JWT token with the given payload.
  */
-export function signToken(payload: JWTPayload): string {
+export async function signToken(payload: JWTPayload): Promise<string> {
     if (!JWT_SECRET) throw new Error("JWT_SECRET is not defined");
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+    const alg = 'HS256';
+    return await new SignJWT({ ...payload })
+        .setProtectedHeader({ alg })
+        .setExpirationTime('7d')
+        .sign(JWT_SECRET_KEY);
 }
 
 /**
  * Verify and decode a JWT token.
  */
-export function verifyToken(token: string): JWTPayload | null {
+export async function verifyToken(token: string): Promise<JWTPayload | null> {
     try {
         if (!JWT_SECRET) throw new Error("JWT_SECRET is not defined");
-        return jwt.verify(token, JWT_SECRET) as JWTPayload;
+        const { payload } = await jwtVerify(token, JWT_SECRET_KEY);
+        return payload as unknown as JWTPayload;
     } catch {
         return null;
     }
@@ -64,10 +71,10 @@ export function clearSessionCookie(response: NextResponse): void {
  * Get and verify the token from an incoming API request's cookie.
  * Works in Route Handlers.
  */
-export function getTokenFromRequest(req: NextRequest): JWTPayload | null {
+export async function getTokenFromRequest(req: NextRequest): Promise<JWTPayload | null> {
     const token = req.cookies.get(COOKIE_NAME)?.value;
     if (!token) return null;
-    return verifyToken(token);
+    return await verifyToken(token);
 }
 
 /**
@@ -77,5 +84,5 @@ export async function getSessionFromCookies(): Promise<JWTPayload | null> {
     const cookieStore = await cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
     if (!token) return null;
-    return verifyToken(token);
+    return await verifyToken(token);
 }

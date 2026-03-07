@@ -4,7 +4,7 @@ import { markAttendance, getAttendanceForClass } from "@/lib/services/attendence
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const payload = getTokenFromRequest(req);
+        const payload = await getTokenFromRequest(req);
         if (!payload) return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
 
         const { id } = await params;
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const payload = getTokenFromRequest(req);
+        const payload = await getTokenFromRequest(req);
         if (!payload) return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
         if (!["teacher", "admin"].includes(payload.roleName)) {
             return NextResponse.json({ error: "Only teachers and admins can view attendance." }, { status: 403 });

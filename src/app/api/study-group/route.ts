@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const payload = getTokenFromRequest(req);
+        const payload = await getTokenFromRequest(req);
         if (!payload) return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
 
         const body = await req.json();

@@ -5,7 +5,7 @@ import { progressSchema } from "@/lib/validators/lesson.schema";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const payload = getTokenFromRequest(req);
+        const payload = await getTokenFromRequest(req);
         if (!payload) return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
 
         const { id } = await params;
