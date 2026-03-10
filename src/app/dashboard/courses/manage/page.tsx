@@ -1,9 +1,10 @@
-import React from 'react'
+import ManageCourses from "@/components/courses/ManageCourses";
 
-const page = () => {
-  return (
-    <div>Teacher course management</div>
-  )
+export const metadata = {
+  title: "Manage Courses | EduAccess",
+  description: "Create, edit, and delete courses on the platform.",
+};
+
+export default function ManageCoursesPage() {
+  return <ManageCourses />;
 }
-
-export default page

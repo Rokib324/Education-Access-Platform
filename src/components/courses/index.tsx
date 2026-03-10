@@ -1,17 +1,20 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { BiBook, BiDownload, BiStar, BiTime } from "react-icons/bi";
+import { BiBook, BiRefresh, BiSearch, BiStar } from "react-icons/bi";
 
 export type Course = {
   _id: string;
   title: string;
   description?: string;
-  subject?: string;
-  grade?: string;
+  subject?: string;      // from subject_id.subject_name (populated)
+  grade?: string;        // from grade_id.grade_name (populated)
   is_vocational?: boolean;
   thumbnail?: string;
   lessonCount?: number;
+  subject_id?: { subject_name: string };
+  grade_id?: { grade_name: string };
 };
 
 // ─── Course Card ──────────────────────────────────────────────────────────────
@@ -19,60 +22,65 @@ type CourseCardProps = {
   course: Course;
 };
 
-export const CourseCard = ({ course }: CourseCardProps) => (
-  <div className="group flex flex-col rounded-xl border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md">
-    {/* Thumbnail */}
-    <div className="flex h-36 items-center justify-center rounded-t-xl bg-zinc-100">
-      <BiBook className="h-12 w-12 text-zinc-300" />
-    </div>
+export const CourseCard = ({ course }: CourseCardProps) => {
+  const subjectName = course.subject ?? course.subject_id?.subject_name;
+  const gradeName = course.grade ?? course.grade_id?.grade_name;
 
-    <div className="flex flex-1 flex-col gap-2 p-4">
-      {/* Badges */}
-      <div className="flex flex-wrap gap-1.5">
-        {course.grade && (
-          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
-            {course.grade}
-          </span>
-        )}
-        {course.subject && (
-          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
-            {course.subject}
-          </span>
-        )}
-        {course.is_vocational && (
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
-            Vocational
-          </span>
-        )}
+  return (
+    <div className="group flex flex-col rounded-xl border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+      {/* Thumbnail */}
+      <div className="flex h-36 items-center justify-center rounded-t-xl bg-gradient-to-br from-zinc-100 to-zinc-200">
+        <BiBook className="h-12 w-12 text-zinc-300" />
       </div>
 
-      <h3 className="text-sm font-semibold text-zinc-900 leading-snug">
-        {course.title}
-      </h3>
+      <div className="flex flex-1 flex-col gap-2 p-4">
+        {/* Badges */}
+        <div className="flex flex-wrap gap-1.5">
+          {gradeName && (
+            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+              {gradeName}
+            </span>
+          )}
+          {subjectName && (
+            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+              {subjectName}
+            </span>
+          )}
+          {course.is_vocational && (
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+              Vocational
+            </span>
+          )}
+        </div>
 
-      {course.description && (
-        <p className="text-xs text-zinc-500 line-clamp-2">
-          {course.description}
-        </p>
-      )}
+        <h3 className="text-sm font-semibold text-zinc-900 leading-snug">
+          {course.title}
+        </h3>
 
-      <div className="mt-auto flex items-center justify-between pt-3 border-t border-zinc-100">
-        {course.lessonCount !== undefined && (
-          <span className="flex items-center gap-1 text-xs text-zinc-500">
-            <BiBook className="h-3.5 w-3.5" />
-            {course.lessonCount} lessons
-          </span>
+        {course.description && (
+          <p className="text-xs text-zinc-500 line-clamp-2">
+            {course.description}
+          </p>
         )}
-        <Link
-          href={`/dashboard/courses/${course._id}`}
-          className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-zinc-700 transition-colors"
-        >
-          View Course
-        </Link>
+
+        <div className="mt-auto flex items-center justify-between pt-3 border-t border-zinc-100">
+          {course.lessonCount !== undefined && (
+            <span className="flex items-center gap-1 text-xs text-zinc-500">
+              <BiBook className="h-3.5 w-3.5" />
+              {course.lessonCount} lessons
+            </span>
+          )}
+          <Link
+            href={`/dashboard/courses/${course._id}`}
+            className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-zinc-700 transition-colors ml-auto"
+          >
+            View Course
+          </Link>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ─── Course List ──────────────────────────────────────────────────────────────
 type FilterState = {
@@ -82,64 +90,10 @@ type FilterState = {
   vocational: boolean;
 };
 
-const DEMO_COURSES: Course[] = [
-  {
-    _id: "1",
-    title: "Mathematics Fundamentals",
-    description: "Build strong number sense, algebra, and geometry skills.",
-    subject: "Mathematics",
-    grade: "Grade 5",
-    is_vocational: false,
-    lessonCount: 12,
-  },
-  {
-    _id: "2",
-    title: "English Reading & Writing",
-    description: "Develop reading comprehension and expressive writing.",
-    subject: "English",
-    grade: "Grade 4",
-    is_vocational: false,
-    lessonCount: 10,
-  },
-  {
-    _id: "3",
-    title: "Basic Electronics & Repair",
-    description: "Hands-on technical skills for electronic device repair.",
-    subject: "Vocational",
-    grade: "Grade 8",
-    is_vocational: true,
-    lessonCount: 8,
-  },
-  {
-    _id: "4",
-    title: "Entrepreneurship Basics",
-    description: "Learn how to start, run, and grow a small business.",
-    subject: "Business",
-    grade: "Grade 9",
-    is_vocational: true,
-    lessonCount: 6,
-  },
-  {
-    _id: "5",
-    title: "Science — Our Environment",
-    description: "Explore ecosystems, climate, and environmental care.",
-    subject: "Science",
-    grade: "Grade 6",
-    is_vocational: false,
-    lessonCount: 9,
-  },
-  {
-    _id: "6",
-    title: "Agricultural Skills",
-    description: "Practical farming, irrigation, and soil management.",
-    subject: "Agriculture",
-    grade: "Grade 7",
-    is_vocational: true,
-    lessonCount: 7,
-  },
-];
-
 const CourseList = () => {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     grade: "",
@@ -147,13 +101,37 @@ const CourseList = () => {
     vocational: false,
   });
 
-  const grades = [...new Set(DEMO_COURSES.map((c) => c.grade!).filter(Boolean))];
-  const subjects = [...new Set(DEMO_COURSES.map((c) => c.subject!).filter(Boolean))];
+  const fetchCourses = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/courses");
+      if (!res.ok) throw new Error("Failed to load courses.");
+      const data = await res.json();
+      // Normalize populated fields to flat strings for easier filtering
+      const normalized: Course[] = (data.courses ?? []).map((c: Course) => ({
+        ...c,
+        subject: c.subject ?? c.subject_id?.subject_name,
+        grade: c.grade ?? c.grade_id?.grade_name,
+      }));
+      setCourses(normalized);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const filtered = DEMO_COURSES.filter((c) => {
+  useEffect(() => { fetchCourses(); }, [fetchCourses]);
+
+  const grades = [...new Set(courses.map((c) => c.grade!).filter(Boolean))];
+  const subjects = [...new Set(courses.map((c) => c.subject!).filter(Boolean))];
+
+  const filtered = courses.filter((c) => {
     if (
       filters.search &&
-      !c.title.toLowerCase().includes(filters.search.toLowerCase())
+      !c.title.toLowerCase().includes(filters.search.toLowerCase()) &&
+      !(c.description ?? "").toLowerCase().includes(filters.search.toLowerCase())
     )
       return false;
     if (filters.grade && c.grade !== filters.grade) return false;
@@ -172,21 +150,33 @@ const CourseList = () => {
             Browse and enroll in available courses
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-          <BiStar className="h-4 w-4 text-amber-400" />
-          {filtered.length} courses available
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+            <BiStar className="h-4 w-4 text-amber-400" />
+            {loading ? "…" : `${filtered.length} courses available`}
+          </div>
+          <button
+            onClick={fetchCourses}
+            className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+          >
+            <BiRefresh className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-        <input
-          type="text"
-          placeholder="Search courses…"
-          value={filters.search}
-          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-          className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-700 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-300 w-48"
-        />
+        <div className="relative">
+          <BiSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <input
+            type="text"
+            placeholder="Search courses…"
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+            className="rounded-lg border border-zinc-200 py-2 pl-9 pr-3 text-sm text-zinc-700 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-300 w-48"
+          />
+        </div>
         <select
           value={filters.grade}
           onChange={(e) => setFilters({ ...filters, grade: e.target.value })}
@@ -235,10 +225,26 @@ const CourseList = () => {
       </div>
 
       {/* Grid */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 text-zinc-400">
+          <BiRefresh className="h-10 w-10 animate-spin mb-3" />
+          <p className="text-sm">Loading courses…</p>
+        </div>
+      ) : error ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
+          {error}{" "}
+          <button onClick={fetchCourses} className="underline font-semibold">
+            Retry
+          </button>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 py-16 text-center">
           <BiBook className="h-10 w-10 text-zinc-300" />
-          <p className="mt-3 text-sm text-zinc-500">No courses match your filters.</p>
+          <p className="mt-3 text-sm text-zinc-500">
+            {courses.length === 0
+              ? "No courses found. Ask your teacher to add courses."
+              : "No courses match your filters."}
+          </p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -251,5 +257,4 @@ const CourseList = () => {
   );
 };
 
-import { useState } from "react";
 export default CourseList;

@@ -1,35 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   BiBookOpen,
   BiCheckCircle,
-  BiDownload,
   BiPlay,
   BiSortAlt2,
+  BiRefresh,
 } from "react-icons/bi";
+import OfflineButton from "@/components/lessons/OfflineButton";
 
 export type Lesson = {
   _id: string;
   title: string;
-  content_type: "video" | "text" | "interactive";
-  difficulty_level: "beginner" | "intermediate" | "advanced";
+  content_type: "video" | "pdf" | "text" | "audio" | "interactive";
+  difficulty_level: "easy" | "medium" | "hard";
   sequence_no: number;
   course_title?: string;
   duration_min?: number;
   is_completed?: boolean;
-  is_downloaded?: boolean;
 };
 
 const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: "bg-emerald-100 text-emerald-700",
-  intermediate: "bg-amber-100 text-amber-700",
-  advanced: "bg-red-100 text-red-700",
+  easy: "bg-emerald-100 text-emerald-700",
+  medium: "bg-amber-100 text-amber-700",
+  hard: "bg-red-100 text-red-700",
 };
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   video: <BiPlay className="h-4 w-4" />,
+  pdf: <BiBookOpen className="h-4 w-4" />,
   text: <BiBookOpen className="h-4 w-4" />,
+  audio: <BiSortAlt2 className="h-4 w-4" />,
   interactive: <BiSortAlt2 className="h-4 w-4" />,
 };
 
@@ -50,9 +52,7 @@ export const LessonCard = ({ lesson }: { lesson: Lesson }) => (
         </span>
         {/* Difficulty badge */}
         <span
-          className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize ${
-            DIFFICULTY_COLORS[lesson.difficulty_level]
-          }`}
+          className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize ${DIFFICULTY_COLORS[lesson.difficulty_level]}`}
         >
           {lesson.difficulty_level}
         </span>
@@ -77,16 +77,8 @@ export const LessonCard = ({ lesson }: { lesson: Lesson }) => (
       {lesson.duration_min && (
         <span className="text-xs text-zinc-400">{lesson.duration_min}m</span>
       )}
-      <button
-        title="Download for offline"
-        className={`rounded-lg border p-2 transition-colors ${
-          lesson.is_downloaded
-            ? "border-zinc-200 bg-zinc-50 text-zinc-400"
-            : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"
-        }`}
-      >
-        <BiDownload className="h-4 w-4" />
-      </button>
+      {/* Dynamic offline button */}
+      <OfflineButton lessonId={lesson._id} lessonTitle={lesson.title} size="sm" />
       <button className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-zinc-700 transition-colors">
         Start
       </button>
@@ -94,83 +86,53 @@ export const LessonCard = ({ lesson }: { lesson: Lesson }) => (
   </div>
 );
 
-// ─── Demo data ────────────────────────────────────────────────────────────────
-const DEMO_LESSONS: Lesson[] = [
-  {
-    _id: "l1",
-    title: "Introduction to Numbers",
-    content_type: "video",
-    difficulty_level: "beginner",
-    sequence_no: 1,
-    course_title: "Mathematics Fundamentals",
-    duration_min: 8,
-    is_completed: true,
-  },
-  {
-    _id: "l2",
-    title: "Addition & Subtraction",
-    content_type: "interactive",
-    difficulty_level: "beginner",
-    sequence_no: 2,
-    course_title: "Mathematics Fundamentals",
-    duration_min: 15,
-    is_completed: true,
-  },
-  {
-    _id: "l3",
-    title: "Multiplication Tables",
-    content_type: "text",
-    difficulty_level: "intermediate",
-    sequence_no: 3,
-    course_title: "Mathematics Fundamentals",
-    duration_min: 12,
-    is_completed: false,
-    is_downloaded: true,
-  },
-  {
-    _id: "l4",
-    title: "Word Formation & Spelling",
-    content_type: "interactive",
-    difficulty_level: "beginner",
-    sequence_no: 1,
-    course_title: "English Reading & Writing",
-    duration_min: 10,
-    is_completed: false,
-  },
-  {
-    _id: "l5",
-    title: "Sentence Structure",
-    content_type: "video",
-    difficulty_level: "intermediate",
-    sequence_no: 2,
-    course_title: "English Reading & Writing",
-    duration_min: 14,
-    is_completed: false,
-  },
-  {
-    _id: "l6",
-    title: "Advanced Algebra",
-    content_type: "video",
-    difficulty_level: "advanced",
-    sequence_no: 4,
-    course_title: "Mathematics Fundamentals",
-    duration_min: 20,
-    is_completed: false,
-  },
-];
-
 // ─── Lesson List ──────────────────────────────────────────────────────────────
-const LessonList = () => {
+type Props = {
+  courseId?: string; // if provided, load lessons for that course; otherwise use query param
+};
+
+const LessonList = ({ courseId }: Props) => {
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState("");
   const [type, setType] = useState("");
 
-  const filtered = DEMO_LESSONS.filter((l) => {
+  const fetchLessons = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Derive courseId from prop or from the URL query string
+      let cId = courseId;
+      if (!cId && typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        cId = params.get("courseId") ?? undefined;
+      }
+      if (!cId) {
+        setLessons([]);
+        setLoading(false);
+        return;
+      }
+      const res = await fetch(`/api/lessons?courseId=${cId}`);
+      if (!res.ok) throw new Error("Failed to load lessons.");
+      const data = await res.json();
+      setLessons(data.lessons ?? []);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [courseId]);
+
+  useEffect(() => { fetchLessons(); }, [fetchLessons]);
+
+  const filtered = lessons.filter((l) => {
     if (difficulty && l.difficulty_level !== difficulty) return false;
     if (type && l.content_type !== type) return false;
     return true;
   });
 
-  const completed = DEMO_LESSONS.filter((l) => l.is_completed).length;
+  const completed = lessons.filter((l) => l.is_completed).length;
 
   return (
     <div className="space-y-6">
@@ -179,21 +141,25 @@ const LessonList = () => {
         <div>
           <h1 className="text-xl font-bold text-zinc-900">Lessons</h1>
           <p className="text-sm text-zinc-500 mt-0.5">
-            {completed} of {DEMO_LESSONS.length} lessons completed
+            {loading
+              ? "Loading…"
+              : `${completed} of ${lessons.length} lessons completed`}
           </p>
         </div>
         {/* Progress bar */}
-        <div className="flex items-center gap-3">
-          <div className="h-2 w-32 rounded-full bg-zinc-100">
-            <div
-              className="h-2 rounded-full bg-zinc-900 transition-all"
-              style={{ width: `${(completed / DEMO_LESSONS.length) * 100}%` }}
-            />
+        {lessons.length > 0 && (
+          <div className="flex items-center gap-3">
+            <div className="h-2 w-32 rounded-full bg-zinc-100">
+              <div
+                className="h-2 rounded-full bg-emerald-600 transition-all"
+                style={{ width: `${lessons.length ? (completed / lessons.length) * 100 : 0}%` }}
+              />
+            </div>
+            <span className="text-xs font-semibold text-zinc-700">
+              {lessons.length ? Math.round((completed / lessons.length) * 100) : 0}%
+            </span>
           </div>
-          <span className="text-xs font-semibold text-zinc-700">
-            {Math.round((completed / DEMO_LESSONS.length) * 100)}%
-          </span>
-        </div>
+        )}
       </div>
 
       {/* Filters */}
@@ -204,9 +170,9 @@ const LessonList = () => {
           className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-300"
         >
           <option value="">All Levels</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
         </select>
         <select
           value={type}
@@ -215,23 +181,50 @@ const LessonList = () => {
         >
           <option value="">All Types</option>
           <option value="video">Video</option>
+          <option value="pdf">PDF</option>
           <option value="text">Text</option>
+          <option value="audio">Audio</option>
           <option value="interactive">Interactive</option>
         </select>
+        <button
+          onClick={fetchLessons}
+          className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+        >
+          <BiRefresh className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
       </div>
 
       {/* List */}
-      <div className="space-y-3">
-        {filtered.map((lesson) => (
-          <LessonCard key={lesson._id} lesson={lesson} />
-        ))}
-        {filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 py-16 text-center">
-            <BiBookOpen className="h-10 w-10 text-zinc-300" />
-            <p className="mt-3 text-sm text-zinc-500">No lessons match your filters.</p>
-          </div>
-        )}
-      </div>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-16 text-zinc-400">
+          <BiRefresh className="h-8 w-8 animate-spin mb-3" />
+          <p className="text-sm">Loading lessons…</p>
+        </div>
+      ) : error ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
+          {error}{" "}
+          <button onClick={fetchLessons} className="underline font-semibold">
+            Retry
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((lesson) => (
+            <LessonCard key={lesson._id} lesson={lesson} />
+          ))}
+          {filtered.length === 0 && (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 py-16 text-center">
+              <BiBookOpen className="h-10 w-10 text-zinc-300" />
+              <p className="mt-3 text-sm text-zinc-500">
+                {lessons.length === 0
+                  ? "No lessons found for this course."
+                  : "No lessons match your filters."}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
