@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   BiBook,
   BiGroup,
@@ -18,7 +18,7 @@ export type StudyGroup = {
 };
 
 // ─── Study Group Card ─────────────────────────────────────────────────────────
-export const StudyGroupCard = ({ group }: { group: StudyGroup }) => (
+export const StudyGroupCard = ({ group, onJoin }: { group: StudyGroup, onJoin?: (id: string) => void }) => (
   <div className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
     <div className="flex items-start justify-between gap-2">
       <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-zinc-100">
@@ -48,6 +48,7 @@ export const StudyGroupCard = ({ group }: { group: StudyGroup }) => (
     </div>
 
     <button
+      onClick={group.is_member ? undefined : () => onJoin && onJoin(group._id)}
       className={`flex w-full items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold transition-colors ${
         group.is_member
           ? "border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
@@ -55,7 +56,7 @@ export const StudyGroupCard = ({ group }: { group: StudyGroup }) => (
       }`}
     >
       {group.is_member ? (
-        "View Group"
+        <a href={`/dashboard/study-groups/${group._id}`} className="w-full text-center">View Group</a>
       ) : (
         <>
           <BiUserPlus className="h-4 w-4" />
@@ -66,58 +67,94 @@ export const StudyGroupCard = ({ group }: { group: StudyGroup }) => (
   </div>
 );
 
-// ─── Demo data ────────────────────────────────────────────────────────────────
-const DEMO_GROUPS: StudyGroup[] = [
-  {
-    _id: "sg1",
-    group_name: "Math Champions",
-    course_title: "Mathematics Fundamentals",
-    member_count: 12,
-    created_by: "Ms. Fatima",
-    is_member: true,
-  },
-  {
-    _id: "sg2",
-    group_name: "English Readers Club",
-    course_title: "English Reading & Writing",
-    member_count: 8,
-    created_by: "Mr. Karim",
-    is_member: false,
-  },
-  {
-    _id: "sg3",
-    group_name: "Future Entrepreneurs",
-    course_title: "Entrepreneurship Basics",
-    member_count: 15,
-    created_by: "Dr. Amina",
-    is_member: true,
-  },
-  {
-    _id: "sg4",
-    group_name: "Science Explorers",
-    course_title: "Science — Our Environment",
-    member_count: 6,
-    created_by: "Mr. Hasan",
-    is_member: false,
-  },
-  {
-    _id: "sg5",
-    group_name: "Farm Innovators",
-    course_title: "Agricultural Skills",
-    member_count: 10,
-    created_by: "Ms. Ranu",
-    is_member: false,
-  },
-];
-
 // ─── Study Group List ─────────────────────────────────────────────────────────
 const StudyGroupList = () => {
   const [tab, setTab] = useState<"all" | "joined">("all");
   const [showCreate, setShowCreate] = useState(false);
+  const [groups, setGroups] = useState<StudyGroup[]>([]);
+  const [courses, setCourses] = useState<{ _id: string, title: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Create Form State
+  const [createData, setCreateData] = useState({ group_name: "", course_id: "" });
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState("");
+
+  const fetchGroups = async () => {
+    try {
+      const res = await fetch("/api/study-group");
+      if (res.ok) {
+        const data = await res.json();
+        const mapped: StudyGroup[] = data.groups.map((g: any) => ({
+          _id: g._id,
+          group_name: g.group_name,
+          course_title: g.course_id.title,
+          member_count: g.member_count,
+          created_by: g.created_by.full_name,
+          is_member: g.is_member
+        }));
+        setGroups(mapped);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGroups();
+    
+    // Fetch courses for the create dropdown
+    fetch("/api/courses?published=true")
+      .then(res => res.json())
+      .then(data => setCourses(data.courses || []))
+      .catch(console.error);
+  }, []);
+
+  const handleJoin = async (id: string) => {
+    try {
+      const res = await fetch(`/api/study-group/${id}/join`, { method: "POST" });
+      if (res.ok) {
+        // Optimistically update UI
+        setGroups(prev => prev.map(g => 
+          g._id === id ? { ...g, is_member: true, member_count: g.member_count + 1 } : g
+        ));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsCreating(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/study-group", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(createData)
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create group");
+
+      // Reset form and refresh list
+      setCreateData({ group_name: "", course_id: "" });
+      setShowCreate(false);
+      fetchGroups();
+    } catch (err: any) {
+      setError(err.message || "An error occurred.");
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   const filtered = tab === "joined"
-    ? DEMO_GROUPS.filter((g) => g.is_member)
-    : DEMO_GROUPS;
+    ? groups.filter((g) => g.is_member)
+    : groups;
 
   return (
     <div className="space-y-6">
@@ -157,34 +194,52 @@ const StudyGroupList = () => {
 
       {/* Create Group Banner */}
       {showCreate && (
-        <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm space-y-3">
+        <form onSubmit={handleCreate} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm space-y-3">
           <h2 className="text-sm font-semibold text-zinc-900">New Study Group</h2>
+          {error && <p className="text-red-500 text-xs">{error}</p>}
           <input
+            required
+            value={createData.group_name}
+            onChange={e => setCreateData({ ...createData, group_name: e.target.value })}
             placeholder="Group name…"
             className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300"
           />
-          <select className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-300">
-            <option value="">Select a course…</option>
-            <option>Mathematics Fundamentals</option>
-            <option>English Reading & Writing</option>
-            <option>Entrepreneurship Basics</option>
+          <select 
+            required
+            value={createData.course_id}
+            onChange={e => setCreateData({ ...createData, course_id: e.target.value })}
+            className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-300"
+          >
+            <option value="" disabled>Select a course…</option>
+            {courses.map(c => (
+              <option key={c._id} value={c._id}>{c.title}</option>
+            ))}
           </select>
           <div className="flex gap-2">
-            <button className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700">
-              Create
+            <button 
+              type="submit"
+              disabled={isCreating}
+              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700 disabled:opacity-50"
+            >
+              {isCreating ? "Creating..." : "Create"}
             </button>
             <button
+              type="button"
               onClick={() => setShowCreate(false)}
               className="rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-50"
             >
               Cancel
             </button>
           </div>
-        </div>
+        </form>
       )}
 
       {/* Grid */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900"></div>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 py-16">
           <BiGroup className="h-10 w-10 text-zinc-300" />
           <p className="mt-3 text-sm text-zinc-500">You haven't joined any groups yet.</p>
@@ -192,7 +247,7 @@ const StudyGroupList = () => {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((group) => (
-            <StudyGroupCard key={group._id} group={group} />
+            <StudyGroupCard key={group._id} group={group} onJoin={handleJoin} />
           ))}
         </div>
       )}
