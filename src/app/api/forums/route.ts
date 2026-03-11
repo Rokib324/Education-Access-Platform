@@ -13,10 +13,38 @@ const createForumSchema = z.object({
 export async function GET() {
     try {
         await connectDB();
-        const forums = await Forum.find()
-            .populate("created_by", "full_name email")
-            .sort({ createdAt: -1 })
-            .lean();
+
+        const forums = await Forum.aggregate([
+            {
+                $lookup: {
+                    from: "posts",
+                    localField: "_id",
+                    foreignField: "forum_id",
+                    as: "posts"
+                }
+            },
+            {
+               $lookup: {
+                   from: "users",
+                   localField: "created_by",
+                   foreignField: "_id",
+                   as: "creator"
+               }
+            },
+            { $unwind: "$creator" },
+            {
+                $project: {
+                    _id: 1,
+                    title: 1,
+                    description: 1,
+                    "created_by": "$creator.full_name",
+                    post_count: { $size: "$posts" },
+                    createdAt: 1
+                }
+            },
+            { $sort: { createdAt: -1 } }
+        ]);
+
         return NextResponse.json({ forums });
     } catch (err) {
         console.error("[FORUMS GET]", err);
