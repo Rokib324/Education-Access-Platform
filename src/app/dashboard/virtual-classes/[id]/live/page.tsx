@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import LiveChat from "@/components/virtual-classes/LiveChat";
-import { BiDesktop, BiArrowBack, BiLoaderAlt, BiVideoOff } from "react-icons/bi";
+import AttendanceList from "@/components/virtual-classes/AttendanceList";
+import { BiDesktop, BiArrowBack, BiLoaderAlt, BiVideoOff, BiMessageSquareDetail, BiListCheck } from "react-icons/bi";
 
 export default function LiveRoomPage() {
   const { id } = useParams() as { id: string };
@@ -12,6 +13,7 @@ export default function LiveRoomPage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<{ id: string, role: string } | null>(null);
   const [virtualClass, setVirtualClass] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<"chat" | "attendance">("chat");
 
   useEffect(() => {
     // Fetch current user and class details
@@ -20,8 +22,17 @@ export default function LiveRoomPage() {
       fetch(`/api/virtual-classes/${id}`).then(res => res.json())
     ])
     .then(([userData, classData]) => {
+      const isStudent = userData.user?.role === "student";
+      
       if (userData.user) setUser(userData.user);
       if (classData.virtualClass) setVirtualClass(classData.virtualClass);
+      
+      // Auto-mark present if student and class is live
+      if (isStudent && classData.virtualClass?.status === "live") {
+         fetch(`/api/virtual-classes/${id}/attendance`, { method: "POST", headers: { "Content-Type": "application/json" } })
+           .catch(console.error); // Silently auto-mark
+      }
+
       setLoading(false);
     })
     .catch(err => {
@@ -148,9 +159,30 @@ export default function LiveRoomPage() {
           )}
         </div>
 
-        {/* Chat Area */}
-        <div className="w-full lg:w-80 h-1/2 lg:h-full flex-none">
-          <LiveChat classId={id} currentUserId={user?.id} />
+        {/* Right Sidebar */}
+        <div className="w-full lg:w-80 h-1/2 lg:h-full flex flex-col flex-none border-t lg:border-t-0 lg:border-l border-zinc-800">
+          <div className="flex bg-zinc-900 border-b border-zinc-800 shrink-0">
+            <button
+               onClick={() => setActiveTab("chat")}
+               className={`flex-1 py-3 text-sm font-medium flex justify-center items-center gap-2 transition border-b-2 ${activeTab === "chat" ? "border-blue-500 text-white" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
+            >
+              <BiMessageSquareDetail className="w-4 h-4" /> Live Chat
+            </button>
+            <button
+               onClick={() => setActiveTab("attendance")}
+               className={`flex-1 py-3 text-sm font-medium flex justify-center items-center gap-2 transition border-b-2 ${activeTab === "attendance" ? "border-blue-500 text-white" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}
+            >
+              <BiListCheck className="w-4 h-4" /> Attendance
+            </button>
+          </div>
+          <div className="flex-1 overflow-hidden relative">
+            <div className={`absolute inset-0 transition-opacity duration-300 ${activeTab === "chat" ? "opacity-100 z-10" : "opacity-0 pointer-events-none -z-10"}`}>
+               <LiveChat classId={id} currentUserId={user?.id} />
+            </div>
+            <div className={`absolute inset-0 flex flex-col transition-opacity duration-300 ${activeTab === "attendance" ? "opacity-100 z-10" : "opacity-0 pointer-events-none -z-10"}`}>
+               <AttendanceList classId={id} isTeacher={isTeacher} />
+            </div>
+          </div>
         </div>
       </div>
     </div>

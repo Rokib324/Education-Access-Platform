@@ -2,6 +2,7 @@ import connectDB from "@/lib/db/mongodb";
 import VirtualClass from "@/lib/db/models/VirtualClass";
 import VirtualClassSession from "@/lib/db/models/VirtualClassSession";
 import LiveClassMessage from "@/lib/db/models/LiveClassMessage";
+import Attendence from "@/lib/db/models/Attendence";
 import "@/lib/db/models/User";
 import "@/lib/db/models/Course";
 import { Types } from "mongoose";
@@ -128,3 +129,32 @@ export async function sendClassMessage(classId: string, senderId: string, messag
     });
     return LiveClassMessage.findById(msg._id).populate("sender_id", "full_name profile_photo").lean();
 }
+
+export async function getAttendanceByClass(classId: string) {
+    await connectDB();
+    return Attendence.find({ class_id: new Types.ObjectId(classId) })
+        .populate("student_id", "full_name email profile_photo")
+        .sort({ marked_at: -1 })
+        .lean();
+}
+
+export async function markAttendance(
+    classId: string,
+    studentId: string,
+    status: "present" | "absent" | "late"
+) {
+    await connectDB();
+    return Attendence.findOneAndUpdate(
+        {
+            class_id: new Types.ObjectId(classId),
+            student_id: new Types.ObjectId(studentId),
+        },
+        {
+            $set: { status, marked_at: new Date() },
+        },
+        { new: true, upsert: true, runValidators: true }
+    )
+        .populate("student_id", "full_name email profile_photo")
+        .lean();
+}
+
