@@ -134,12 +134,6 @@ const NAV_SECTIONS: NavSection[] = [
         roles: ["admin"],
       },
       {
-        href: "/dashboard/virtual-classes/schedule",
-        label: "Schedule Class",
-        icon: <BiVideo className="h-5 w-5" />,
-        roles: ["teacher", "admin"],
-      },
-      {
         href: "/dashboard/manage/resources",
         label: "Manage Resources",
         icon: <BiListUl className="h-5 w-5" />,

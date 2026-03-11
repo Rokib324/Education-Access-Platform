@@ -1,5 +1,9 @@
 import connectDB from "@/lib/db/mongodb";
 import VirtualClass from "@/lib/db/models/VirtualClass";
+import VirtualClassSession from "@/lib/db/models/VirtualClassSession";
+import LiveClassMessage from "@/lib/db/models/LiveClassMessage";
+import "@/lib/db/models/User";
+import "@/lib/db/models/Course";
 import { Types } from "mongoose";
 
 export interface ClassFilters {
@@ -82,4 +86,45 @@ export async function updateVirtualClass(
     if (data.scheduled_start) vc.scheduled_start = new Date(data.scheduled_start);
     if (data.scheduled_end) vc.scheduled_end = new Date(data.scheduled_end);
     return vc.save();
+}
+
+export async function startClassSession(classId: string) {
+    await connectDB();
+    await updateClassStatus(classId, "live");
+    return VirtualClassSession.create({
+        class_id: new Types.ObjectId(classId),
+        started_at: new Date(),
+    });
+}
+
+export async function endClassSession(classId: string) {
+    await connectDB();
+    const session = await VirtualClassSession.findOne({ class_id: new Types.ObjectId(classId), ended_at: null }).sort({ started_at: -1 });
+    if (!session) return null;
+    
+    session.ended_at = new Date();
+    const durationMs = session.ended_at.getTime() - session.started_at.getTime();
+    session.duration_minutes = Math.floor(durationMs / 60000);
+    await session.save();
+
+    await updateClassStatus(classId, "completed");
+    return session;
+}
+
+export async function getClassMessages(classId: string) {
+    await connectDB();
+    return LiveClassMessage.find({ class_id: new Types.ObjectId(classId) })
+        .populate("sender_id", "full_name profile_photo")
+        .sort({ sent_at: 1 })
+        .lean();
+}
+
+export async function sendClassMessage(classId: string, senderId: string, messageText: string) {
+    await connectDB();
+    const msg = await LiveClassMessage.create({
+        class_id: new Types.ObjectId(classId),
+        sender_id: new Types.ObjectId(senderId),
+        message_text: messageText,
+    });
+    return LiveClassMessage.findById(msg._id).populate("sender_id", "full_name profile_photo").lean();
 }

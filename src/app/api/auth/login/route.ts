@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db/mongodb";
 import User from "@/lib/db/models/User";
+import "@/lib/db/models/Role";
 import { verifyPassword } from "@/lib/auth/passwords";
 import { signToken, setSessionCookie } from "@/lib/auth/sessions";
 
