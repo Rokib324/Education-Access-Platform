@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
     try {
         const payload = await getTokenFromRequest(req);
         if (!payload) return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
+        if (payload.roleName === "student") return NextResponse.json({ error: "Students are not allowed to upload resources." }, { status: 403 });
 
         const body = await req.json();
         const parsed = createResourceSchema.safeParse(body);
