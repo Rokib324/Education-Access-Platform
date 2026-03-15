@@ -34,18 +34,27 @@ const studentStats = [
   { label: "Study Groups", value: "2", icon: <BiGroup className="h-5 w-5 text-purple-500" />, bg: "bg-purple-50" },
 ];
 
-const studentRecentActivity = [
-  { icon: <BiBookOpen className="h-4 w-4 text-blue-500" />, text: "Completed 'Introduction to Numbers' lesson", time: "2h ago" },
-  { icon: <BiTrophy className="h-4 w-4 text-amber-500" />, text: "Scored 18/20 on 'Numbers & Counting Quiz'", time: "3h ago" },
-  { icon: <BiGroup className="h-4 w-4 text-purple-500" />, text: "Joined 'Math Champions' study group", time: "Yesterday" },
-  { icon: <BiDesktop className="h-4 w-4 text-red-500" />, text: "Attended 'Science: Ecosystems' virtual class", time: "2 days ago" },
-  { icon: <BiStar className="h-4 w-4 text-zinc-500" />, text: "Enrolled in 'Entrepreneurship Basics' course", time: "3 days ago" },
-];
+const getIconForType = (type: string) => {
+  switch (type) {
+    case "quiz":
+      return <BiTrophy className="h-4 w-4 text-amber-500" />;
+    case "lesson":
+      return <BiBookOpen className="h-4 w-4 text-blue-500" />;
+    case "course":
+      return <BiBook className="h-4 w-4 text-purple-500" />;
+    case "class":
+      return <BiDesktop className="h-4 w-4 text-blue-500" />;
+    case "resource":
+      return <BiStar className="h-4 w-4 text-emerald-500" />;
+    case "user":
+      return <BiUser className="h-4 w-4 text-blue-500" />;
+    case "course_admin":
+      return <BiCheckCircle className="h-4 w-4 text-emerald-500" />;
+    default:
+      return <BiStar className="h-4 w-4 text-zinc-500" />;
+  }
+};
 
-const studentUpcomingClasses = [
-  { title: "Math Live Session — Fractions", teacher: "Ms. Fatima", time: "Today · 5:00 PM", status: "live" },
-  { title: "English Reading Circle", teacher: "Mr. Karim", time: "Mar 5 · 4:00 PM", status: "upcoming" },
-];
 
 const teacherStats = [
   { label: "Active Courses", value: "3", icon: <BiChalkboard className="h-5 w-5 text-blue-500" />, bg: "bg-blue-50" },
@@ -54,16 +63,8 @@ const teacherStats = [
   { label: "Upcoming Classes", value: "4", icon: <BiTime className="h-5 w-5 text-purple-500" />, bg: "bg-purple-50" },
 ];
 
-const teacherRecentActivity = [
-  { icon: <BiCheckCircle className="h-4 w-4 text-emerald-500" />, text: "Graded 'Midterm Algebra' assignments", time: "1h ago" },
-  { icon: <BiBook className="h-4 w-4 text-blue-500" />, text: "Posted new lesson in 'Science Basics'", time: "4h ago" },
-  { icon: <BiGroup className="h-4 w-4 text-purple-500" />, text: "Created 'Science Fair' study group", time: "Yesterday" },
-];
-
-const teacherUpcomingClasses = [
-  { title: "Science Basics — Forces", teacher: "You", time: "Today · 2:00 PM", status: "live" },
-  { title: "Midterm Review", teacher: "You", time: "Tomorrow · 10:00 AM", status: "upcoming" },
-];
+// Removed static teacherRecentActivity
+// Removed static teacherUpcomingClasses
 
 const adminStats = [
   { label: "Total Users", value: "1,432", icon: <BiGroup className="h-5 w-5 text-blue-500" />, bg: "bg-blue-50" },
@@ -72,12 +73,7 @@ const adminStats = [
   { label: "System Reports", value: "3", icon: <BiErrorCircle className="h-5 w-5 text-red-500" />, bg: "bg-red-50" },
 ];
 
-const adminRecentActivity = [
-  { icon: <BiUser className="h-4 w-4 text-blue-500" />, text: "New teacher account registered: 'David M.'", time: "10m ago" },
-  { icon: <BiCheckCircle className="h-4 w-4 text-emerald-500" />, text: "Approved course 'Advanced Physics'", time: "2h ago" },
-  { icon: <BiWrench className="h-4 w-4 text-zinc-500" />, text: "System maintenance completed successfully", time: "Yesterday" },
-  { icon: <BiLineChart className="h-4 w-4 text-purple-500" />, text: "Weekly user engagement report generated", time: "2 days ago" },
-];
+// Removed static adminRecentActivity
 
 const adminSystemAlerts = [
   { title: "High Server Load Detected", severity: "medium", time: "Today · 8:00 AM" },
@@ -144,11 +140,45 @@ export default function DashboardHome() {
 }
 
 function StudentDashboard() {
+  const [stats, setStats] = useState([
+    { label: "Courses Enrolled", value: "...", icon: <BiBook className="h-5 w-5 text-blue-500" />, bg: "bg-blue-50" },
+    { label: "Lessons Completed", value: "...", icon: <BiCheckCircle className="h-5 w-5 text-emerald-500" />, bg: "bg-emerald-50" },
+    { label: "Posts", value: "...", icon: <BiTrophy className="h-5 w-5 text-amber-500" />, bg: "bg-amber-50" },
+    { label: "Certificates", value: "...", icon: <BiGroup className="h-5 w-5 text-purple-500" />, bg: "bg-purple-50" },
+  ]);
+  const [upcomingClasses, setUpcomingClasses] = useState<{title: string, teacher: string, time: string, status: string}[]>([]);
+  const [recentActivity, setRecentActivity] = useState<{type: string, text: string, time: string}[]>([]);
+
+  useEffect(() => {
+    fetch("/api/profile/stats")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.stats && data.stats.length === 4) {
+           setStats([
+             { label: data.stats[0].label, value: data.stats[0].value.toString(), icon: <BiBook className="h-5 w-5 text-blue-500" />, bg: "bg-blue-50" },
+             { label: data.stats[1].label, value: data.stats[1].value.toString(), icon: <BiCheckCircle className="h-5 w-5 text-emerald-500" />, bg: "bg-emerald-50" },
+             { label: data.stats[2].label, value: data.stats[2].value.toString(), icon: <BiTrophy className="h-5 w-5 text-amber-500" />, bg: "bg-amber-50" },
+             { label: data.stats[3].label, value: data.stats[3].value.toString(), icon: <BiGroup className="h-5 w-5 text-purple-500" />, bg: "bg-purple-50" },
+           ]);
+        }
+      })
+      .catch(console.error);
+
+    fetch("/api/dashboard/upcoming-classes")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.upcomingClasses) {
+          setUpcomingClasses(data.upcomingClasses);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
   return (
     <>
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {studentStats.map((s) => (
+        {stats.map((s) => (
           <div key={s.label} className={`flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm ${s.bg}`}>
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white shadow-sm">{s.icon}</div>
             <div>
@@ -164,18 +194,22 @@ function StudentDashboard() {
         <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold text-zinc-900">Upcoming Classes</h2>
           <div className="space-y-3">
-            {studentUpcomingClasses.map((cls) => (
-              <div key={cls.title} className="flex items-center gap-3 rounded-lg border border-zinc-100 p-3">
-                <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${cls.status === "live" ? "bg-red-500 animate-pulse" : "bg-blue-400"}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-zinc-900 truncate">{cls.title}</p>
-                  <p className="text-xs text-zinc-500">{cls.teacher} · {cls.time}</p>
+            {upcomingClasses.length > 0 ? (
+              upcomingClasses.map((cls, idx) => (
+                <div key={idx} className="flex items-center gap-3 rounded-lg border border-zinc-100 p-3">
+                  <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${cls.status === "live" ? "bg-red-500 animate-pulse" : "bg-blue-400"}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-zinc-900 truncate">{cls.title}</p>
+                    <p className="text-xs text-zinc-500">{cls.teacher} · {cls.time}</p>
+                  </div>
+                  <button className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors ${cls.status === "live" ? "bg-red-600 hover:bg-red-700" : "bg-zinc-900 hover:bg-zinc-700"}`}>
+                    {cls.status === "live" ? "Join" : "View"}
+                  </button>
                 </div>
-                <button className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors ${cls.status === "live" ? "bg-red-600 hover:bg-red-700" : "bg-zinc-900 hover:bg-zinc-700"}`}>
-                  {cls.status === "live" ? "Join" : "View"}
-                </button>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-zinc-500 text-center py-4">No upcoming classes scheduled.</p>
+            )}
           </div>
         </div>
 
@@ -183,15 +217,19 @@ function StudentDashboard() {
         <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold text-zinc-900">Recent Activity</h2>
           <div className="space-y-3">
-            {studentRecentActivity.map((item, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-zinc-50 border border-zinc-100">{item.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-zinc-700 leading-snug">{item.text}</p>
-                  <p className="mt-0.5 flex items-center gap-1 text-[11px] text-zinc-400"><BiTime className="h-3 w-3" /> {item.time}</p>
+            {recentActivity.length > 0 ? (
+              recentActivity.map((item, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-zinc-50 border border-zinc-100">{getIconForType(item.type)}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-zinc-700 leading-snug">{item.text}</p>
+                    <p className="mt-0.5 flex items-center gap-1 text-[11px] text-zinc-400"><BiTime className="h-3 w-3" /> {item.time}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+                <p className="text-sm text-zinc-500 text-center py-4">No recent activity.</p>
+            )}
           </div>
         </div>
       </div>
@@ -223,10 +261,44 @@ function StudentDashboard() {
 }
 
 function TeacherDashboard() {
+  const [stats, setStats] = useState([
+    { label: "Active Courses", value: "...", icon: <BiChalkboard className="h-5 w-5 text-blue-500" />, bg: "bg-blue-50" },
+    { label: "Students Enrolled", value: "...", icon: <BiUser className="h-5 w-5 text-emerald-500" />, bg: "bg-emerald-50" },
+    { label: "Assignments to Grade", value: "...", icon: <BiBookOpen className="h-5 w-5 text-amber-500" />, bg: "bg-amber-50" },
+    { label: "Upcoming Classes", value: "...", icon: <BiTime className="h-5 w-5 text-purple-500" />, bg: "bg-purple-50" },
+  ]);
+  const [upcomingClasses, setUpcomingClasses] = useState<{title: string, teacher: string, time: string, status: string}[]>([]);
+  const [recentActivity, setRecentActivity] = useState<{type: string, text: string, time: string}[]>([]);
+
+  useEffect(() => {
+    fetch("/api/profile/stats")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.stats && data.stats.length === 4) {
+           setStats([
+             { label: data.stats[0].label, value: data.stats[0].value.toString(), icon: <BiChalkboard className="h-5 w-5 text-blue-500" />, bg: "bg-blue-50" },
+             { label: data.stats[1].label, value: data.stats[1].value.toString(), icon: <BiUser className="h-5 w-5 text-emerald-500" />, bg: "bg-emerald-50" },
+             { label: data.stats[2].label, value: data.stats[2].value.toString(), icon: <BiBookOpen className="h-5 w-5 text-amber-500" />, bg: "bg-amber-50" },
+             { label: data.stats[3].label, value: data.stats[3].value.toString(), icon: <BiTime className="h-5 w-5 text-purple-500" />, bg: "bg-purple-50" },
+           ]);
+        }
+      })
+      .catch(console.error);
+
+    fetch("/api/dashboard/upcoming-classes")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.upcomingClasses) {
+          setUpcomingClasses(data.upcomingClasses);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
   return (
     <>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {teacherStats.map((s) => (
+        {stats.map((s) => (
           <div key={s.label} className={`flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm ${s.bg}`}>
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white shadow-sm">{s.icon}</div>
             <div>
@@ -241,8 +313,9 @@ function TeacherDashboard() {
         <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold text-zinc-900">Your Upcoming Classes</h2>
           <div className="space-y-3">
-            {teacherUpcomingClasses.map((cls) => (
-              <div key={cls.title} className="flex items-center gap-3 rounded-lg border border-zinc-100 p-3">
+            {upcomingClasses.length > 0 ? (
+              upcomingClasses.map((cls, idx) => (
+              <div key={idx} className="flex items-center gap-3 rounded-lg border border-zinc-100 p-3">
                 <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${cls.status === "live" ? "bg-red-500 animate-pulse" : "bg-blue-400"}`} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-zinc-900 truncate">{cls.title}</p>
@@ -252,22 +325,29 @@ function TeacherDashboard() {
                   {cls.status === "live" ? "Start" : "Details"}
                 </button>
               </div>
-            ))}
+            ))
+          ) : (
+            <p className="text-sm text-zinc-500 text-center py-4">No upcoming classes scheduled.</p>
+          )}
           </div>
         </div>
 
         <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold text-zinc-900">Recent Activity</h2>
           <div className="space-y-3">
-            {teacherRecentActivity.map((item, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-zinc-50 border border-zinc-100">{item.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-zinc-700 leading-snug">{item.text}</p>
-                  <p className="mt-0.5 flex items-center gap-1 text-[11px] text-zinc-400"><BiTime className="h-3 w-3" /> {item.time}</p>
+            {recentActivity.length > 0 ? (
+              recentActivity.map((item, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-zinc-50 border border-zinc-100">{getIconForType(item.type)}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-zinc-700 leading-snug">{item.text}</p>
+                    <p className="mt-0.5 flex items-center gap-1 text-[11px] text-zinc-400"><BiTime className="h-3 w-3" /> {item.time}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+                <p className="text-sm text-zinc-500 text-center py-4">No recent activity.</p>
+            )}
           </div>
         </div>
       </div>
@@ -276,10 +356,43 @@ function TeacherDashboard() {
 }
 
 function AdminDashboard() {
+  const [stats, setStats] = useState([
+    { label: "Total Users", value: "...", icon: <BiGroup className="h-5 w-5 text-blue-500" />, bg: "bg-blue-50" },
+    { label: "Active Teachers", value: "...", icon: <BiChalkboard className="h-5 w-5 text-emerald-500" />, bg: "bg-emerald-50" },
+    { label: "Total Courses", value: "...", icon: <BiBook className="h-5 w-5 text-purple-500" />, bg: "bg-purple-50" },
+    { label: "System Reports", value: "...", icon: <BiErrorCircle className="h-5 w-5 text-red-500" />, bg: "bg-red-50" },
+  ]);
+  const [recentActivity, setRecentActivity] = useState<{type: string, text: string, time: string}[]>([]);
+
+  useEffect(() => {
+    fetch("/api/profile/stats")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.stats && data.stats.length === 4) {
+           setStats([
+             { label: data.stats[0].label, value: data.stats[0].value.toString(), icon: <BiGroup className="h-5 w-5 text-blue-500" />, bg: "bg-blue-50" },
+             { label: data.stats[1].label, value: data.stats[1].value.toString(), icon: <BiChalkboard className="h-5 w-5 text-emerald-500" />, bg: "bg-emerald-50" },
+             { label: data.stats[2].label, value: data.stats[2].value.toString(), icon: <BiBook className="h-5 w-5 text-purple-500" />, bg: "bg-purple-50" },
+             { label: data.stats[3].label, value: data.stats[3].value.toString(), icon: <BiErrorCircle className="h-5 w-5 text-red-500" />, bg: "bg-red-50" },
+           ]);
+        }
+      })
+      .catch(console.error);
+
+    fetch("/api/dashboard/recent-activity")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.recentActivities) {
+          setRecentActivity(data.recentActivities);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
   return (
     <>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {adminStats.map((s) => (
+        {stats.map((s) => (
           <div key={s.label} className={`flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm ${s.bg}`}>
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white shadow-sm">{s.icon}</div>
             <div>
@@ -322,15 +435,19 @@ function AdminDashboard() {
         <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold text-zinc-900">Recent Platform Activity</h2>
           <div className="space-y-3">
-            {adminRecentActivity.map((item, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-zinc-50 border border-zinc-100">{item.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-zinc-700 leading-snug">{item.text}</p>
-                  <p className="mt-0.5 flex items-center gap-1 text-[11px] text-zinc-400"><BiTime className="h-3 w-3" /> {item.time}</p>
+            {recentActivity.length > 0 ? (
+              recentActivity.map((item, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-zinc-50 border border-zinc-100">{getIconForType(item.type)}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-zinc-700 leading-snug">{item.text}</p>
+                    <p className="mt-0.5 flex items-center gap-1 text-[11px] text-zinc-400"><BiTime className="h-3 w-3" /> {item.time}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+                <p className="text-sm text-zinc-500 text-center py-4">No recent activity.</p>
+            )}
           </div>
         </div>
       </div>

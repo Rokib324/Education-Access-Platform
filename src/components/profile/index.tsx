@@ -1,36 +1,78 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
-  BiAward,
   BiBell,
-  BiBook,
   BiCamera,
-  BiChevronRight,
-  BiCog,
   BiKey,
   BiLogOut,
-  BiMessageDetail,
   BiUser,
 } from "react-icons/bi";
+import type { UserRole } from "@/types/auth";
 
-// Mock user data
-const USER = {
-  name: "Rakibul Islam",
-  email: "rakibul.dev@example.com",
-  role: "Student",
-  joinDate: "January 2026",
-  avatar: null, // null testing default avatar
-  stats: {
-    enrolledCourses: 4,
-    completedLessons: 24,
-    forumPosts: 12,
-    certificates: 1,
-  },
-};
+interface UserProfile {
+  id: string;
+  full_name: string;
+  email: string;
+  role: UserRole;
+  profile_photo?: string;
+  location?: string;
+  created_at: string;
+}
 
 const ProfilePage = () => {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"profile" | "security" | "notifications">("profile");
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => {
+        if (!res.ok) {
+          router.push("/auth/login");
+          return null;
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data?.user) {
+          setUser(data.user);
+        }
+      })
+      .catch((err) => console.error("[ProfilePage]", err))
+      .finally(() => setLoading(false));
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600" />
+          <p className="text-sm text-zinc-500">Loading profile…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  const joinDate = user.created_at
+    ? new Date(user.created_at).toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      })
+    : "Unknown";
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.push("/auth/login");
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -44,10 +86,10 @@ const ProfilePage = () => {
           {/* Avatar container */}
           <div className="relative group">
             <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-zinc-100 text-3xl font-bold text-zinc-800 shadow-inner overflow-hidden">
-              {USER.avatar ? (
-                <img src={USER.avatar} alt={USER.name} className="h-full w-full object-cover" />
+              {user.profile_photo ? (
+                <img src={user.profile_photo} alt={user.full_name} className="h-full w-full object-cover" />
               ) : (
-                USER.name.charAt(0)
+                user.full_name.charAt(0).toUpperCase()
               )}
             </div>
             <button className="absolute -bottom-2 -right-2 rounded-full border-4 border-zinc-900 bg-white p-2 text-zinc-900 shadow-sm transition-transform hover:scale-105 group-hover:bg-zinc-100">
@@ -56,39 +98,18 @@ const ProfilePage = () => {
           </div>
 
           <div className="text-center sm:text-left">
-            <h1 className="text-2xl font-bold">{USER.name}</h1>
-            <p className="mt-1 text-zinc-400">{USER.email}</p>
+            <h1 className="text-2xl font-bold">{user.full_name}</h1>
+            <p className="mt-1 text-zinc-400">{user.email}</p>
             <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
               <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
-                {USER.role}
+                {user.role}
               </span>
               <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-zinc-300">
-                Joined {USER.joinDate}
+                Joined {joinDate}
               </span>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {[
-          { label: "Enrolled", value: USER.stats.enrolledCourses, icon: BiBook },
-          { label: "Lessons", value: USER.stats.completedLessons, icon: BiAward },
-          { label: "Posts", value: USER.stats.forumPosts, icon: BiMessageDetail },
-          { label: "Certificates", value: USER.stats.certificates, icon: BiAward },
-        ].map((stat, i) => {
-          const Icon = stat.icon;
-          return (
-            <div key={i} className="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-50 text-zinc-600">
-                <Icon className="h-5 w-5" />
-              </div>
-              <p className="mt-3 text-2xl font-bold text-zinc-900">{stat.value}</p>
-              <p className="text-xs font-medium text-zinc-500">{stat.label}</p>
-            </div>
-          );
-        })}
       </div>
 
       {/* Main Content Area */}
@@ -120,7 +141,10 @@ const ProfilePage = () => {
           
           <div className="my-2 border-t border-zinc-200" />
           
-          <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+          >
             <BiLogOut className="h-5 w-5 text-red-500" />
             Sign Out
           </button>
@@ -142,7 +166,7 @@ const ProfilePage = () => {
                   <label className="text-sm font-medium text-zinc-700">Full Name</label>
                   <input
                     type="text"
-                    defaultValue={USER.name}
+                    defaultValue={user.full_name}
                     className="w-full rounded-lg border border-zinc-200 px-3 py-2.5 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 focus:border-zinc-900 transition-all"
                   />
                 </div>
@@ -150,7 +174,7 @@ const ProfilePage = () => {
                   <label className="text-sm font-medium text-zinc-700">Email Address</label>
                   <input
                     type="email"
-                    defaultValue={USER.email}
+                    defaultValue={user.email}
                     disabled
                     className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-500 cursor-not-allowed"
                   />

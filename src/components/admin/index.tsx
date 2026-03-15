@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   BiBarChartAlt2,
   BiBookOpen,
@@ -35,6 +35,29 @@ const QUICK_LINKS = [
 ];
 
 const AdminDashboard = () => {
+  const [stats, setStats] = useState([
+    { label: "Total Students", value: "...", trend: "", icon: BiGroup, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Active Courses", value: "...", trend: "", icon: BiBookOpen, color: "text-indigo-600", bg: "bg-indigo-50" },
+    { label: "Live Classes Today", value: "...", trend: "", icon: BiVideo, color: "text-red-600", bg: "bg-red-50" },
+    { label: "Platform Revenue", value: "...", trend: "", icon: BiTrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
+  ]);
+
+  useEffect(() => {
+    fetch("/api/profile/stats")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.stats && data.stats.length === 4) {
+           setStats([
+             { label: data.stats[0].label, value: data.stats[0].value.toString(), trend: "+12%", icon: BiGroup, color: "text-blue-600", bg: "bg-blue-50" },
+             { label: data.stats[1].label, value: data.stats[1].value.toString(), trend: "+4%", icon: BiBookOpen, color: "text-indigo-600", bg: "bg-indigo-50" },
+             { label: data.stats[2].label, value: data.stats[2].value.toString(), trend: "0%", icon: BiVideo, color: "text-red-600", bg: "bg-red-50" },
+             { label: data.stats[3].label, value: data.stats[3].value.toString(), trend: "+18%", icon: BiTrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
+           ]);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -47,7 +70,7 @@ const AdminDashboard = () => {
 
       {/* Top Stats Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {ADMIN_STATS.map((stat, idx) => {
+        {stats.map((stat, idx) => {
           const Icon = stat.icon;
           const isPositive = stat.trend.startsWith("+");
           
