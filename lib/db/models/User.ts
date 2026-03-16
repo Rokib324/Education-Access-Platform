@@ -6,6 +6,7 @@ export interface IUser extends Document {
     password_hash: string;
     role_id: Types.ObjectId;
     profile_photo?: string;
+    bio?: string;
     location?: string;
     created_at: Date;
 }
@@ -27,6 +28,7 @@ const UserSchema = new Schema<IUser>(
             required: true,
         },
         profile_photo: { type: String, default: "" },
+        bio: { type: String, default: "" },
         location: { type: String, default: "" },
         created_at: { type: Date, default: Date.now },
     },

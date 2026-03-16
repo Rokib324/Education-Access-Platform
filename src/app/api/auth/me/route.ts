@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
         email: user.email,
         role: role.role_name,
         profile_photo: user.profile_photo,
+        bio: user.bio,
         location: user.location,
         created_at: user.created_at,
       },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   BiBell,
@@ -26,6 +26,16 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState<"profile" | "security" | "notifications">("profile");
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const [formData, setFormData] = useState({
+    full_name: "",
+    bio: "",
+  });
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -39,6 +49,10 @@ const ProfilePage = () => {
       .then((data) => {
         if (data?.user) {
           setUser(data.user);
+          setFormData({
+            full_name: data.user.full_name || "",
+            bio: data.user.bio || "",
+          });
         }
       })
       .catch((err) => console.error("[ProfilePage]", err))
@@ -74,6 +88,85 @@ const ProfilePage = () => {
     }
   };
 
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdating(true);
+    setMessage(null);
+
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update profile");
+      }
+
+      setUser((prev) => (prev ? { ...prev, ...formData } : null));
+      setMessage({ type: "success", text: "Profile updated successfully!" });
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Basic validation
+    if (!file.type.startsWith("image/")) {
+      setMessage({ type: "error", text: "Please select an image file." });
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage({ type: "error", text: "Image size must be less than 2MB." });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      updateImage(base64String);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const updateImage = async (url: string) => {
+    setIsUpdating(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile_photo: url }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update image");
+      }
+
+      setUser((prev) => (prev ? { ...prev, profile_photo: url } : null));
+      setMessage({ type: "success", text: "Profile image updated!" });
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       {/* Header section */}
@@ -83,6 +176,14 @@ const ProfilePage = () => {
         <div className="absolute -bottom-20 left-20 z-0 h-48 w-48 rounded-full bg-indigo-500/20 blur-3xl" />
 
         <div className="relative z-10 flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+          {/* Hidden File Input */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/*"
+            className="hidden"
+          />
           {/* Avatar container */}
           <div className="relative group">
             <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-zinc-100 text-3xl font-bold text-zinc-800 shadow-inner overflow-hidden">
@@ -92,7 +193,11 @@ const ProfilePage = () => {
                 user.full_name.charAt(0).toUpperCase()
               )}
             </div>
-            <button className="absolute -bottom-2 -right-2 rounded-full border-4 border-zinc-900 bg-white p-2 text-zinc-900 shadow-sm transition-transform hover:scale-105 group-hover:bg-zinc-100">
+            <button 
+              onClick={handleImageClick}
+              className="absolute -bottom-2 -right-2 rounded-full border-4 border-zinc-900 bg-white p-2 text-zinc-900 shadow-sm transition-transform hover:scale-105 group-hover:bg-zinc-100"
+              title="Change profile photo"
+            >
               <BiCamera className="h-4 w-4" />
             </button>
           </div>
@@ -126,7 +231,10 @@ const ProfilePage = () => {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id as any)}
+                onClick={() => {
+                  setActiveTab(item.id as any);
+                  setMessage(null);
+                }}
                 className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
                   isActive
                     ? "bg-zinc-900 text-white"
@@ -153,7 +261,7 @@ const ProfilePage = () => {
         {/* Tab Content */}
         <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
           {activeTab === "profile" && (
-            <div className="space-y-6 animate-in fade-in">
+            <form onSubmit={handleUpdateProfile} className="space-y-6 animate-in fade-in">
               <div>
                 <h3 className="text-lg font-bold text-zinc-900">Personal Information</h3>
                 <p className="mt-1 text-sm text-zinc-500">
@@ -161,12 +269,21 @@ const ProfilePage = () => {
                 </p>
               </div>
 
+              {message && (
+                <div className={`rounded-lg px-4 py-3 text-sm ${
+                  message.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-red-50 text-red-700 border border-red-100"
+                }`}>
+                  {message.text}
+                </div>
+              )}
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-zinc-700">Full Name</label>
                   <input
                     type="text"
-                    defaultValue={user.full_name}
+                    value={formData.full_name}
+                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                     className="w-full rounded-lg border border-zinc-200 px-3 py-2.5 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 focus:border-zinc-900 transition-all"
                   />
                 </div>
@@ -183,6 +300,8 @@ const ProfilePage = () => {
                   <label className="text-sm font-medium text-zinc-700">Bio</label>
                   <textarea
                     rows={3}
+                    value={formData.bio}
+                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                     placeholder="Tell us a bit about yourself..."
                     className="w-full rounded-lg border border-zinc-200 px-3 py-2.5 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 focus:border-zinc-900 transition-all resize-none"
                   />
@@ -190,11 +309,15 @@ const ProfilePage = () => {
               </div>
 
               <div className="flex justify-end border-t border-zinc-100 pt-5">
-                <button className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 transition-colors">
-                  Save Changes
+                <button 
+                  type="submit"
+                  disabled={isUpdating}
+                  className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                >
+                  {isUpdating ? "Saving..." : "Save Changes"}
                 </button>
               </div>
-            </div>
+            </form>
           )}
 
           {activeTab === "security" && (
