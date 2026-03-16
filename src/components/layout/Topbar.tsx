@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -15,6 +15,7 @@ import type { UserRole } from "@/types/auth";
 type TopbarProps = {
   role: UserRole;
   userName: string;
+  profilePhoto?: string;
 };
 
 const ROLE_COLORS: Record<UserRole, string> = {
@@ -23,9 +24,36 @@ const ROLE_COLORS: Record<UserRole, string> = {
   admin: "bg-violet-100 text-violet-700",
 };
 
-const Topbar = ({ role, userName }: TopbarProps) => {
+const SEARCH_PLACEHOLDERS: Record<UserRole, string> = {
+  admin: "Search users, roles, system settings...",
+  teacher: "Search courses, students, resource library...",
+  student: "Search courses, lessons, my resources...",
+};
+
+const Topbar = ({ role, userName, profilePhoto }: TopbarProps) => {
   const router = useRouter();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(true);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch("/api/dashboard/recent-activity");
+        if (res.ok) {
+          const data = await res.json();
+          setNotifications(data.recentActivities || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch notifications", err);
+      } finally {
+        setLoadingNotifications(false);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
 
   const initials = userName
     .split(" ")
@@ -47,12 +75,12 @@ const Topbar = ({ role, userName }: TopbarProps) => {
         <div className="hidden w-full max-w-md items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 shadow-sm md:flex">
           <BiSearch className="h-4 w-4 text-zinc-500" />
           <input
-            placeholder="Search courses, lessons, resources…"
+            placeholder={SEARCH_PLACEHOLDERS[role]}
             className="w-full bg-transparent outline-none placeholder:text-zinc-400"
           />
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-3">
           {/* Role pill */}
           <span
             className={`hidden rounded-full px-3 py-1 text-xs font-semibold md:inline-flex ${ROLE_COLORS[role]}`}
@@ -61,28 +89,79 @@ const Topbar = ({ role, userName }: TopbarProps) => {
           </span>
 
           {/* Notifications */}
-          <button
-            type="button"
-            className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-sm hover:bg-zinc-50"
-            aria-label="Notifications"
-          >
-            <BiBell className="h-5 w-5" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setNotificationsOpen(!notificationsOpen);
+                setProfileOpen(false);
+              }}
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-sm hover:bg-zinc-50"
+              aria-label="Notifications"
+            >
+              <BiBell className="h-5 w-5" />
+              {notifications.length > 0 && (
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
+              )}
+            </button>
+
+            {notificationsOpen && (
+              <>
+                {/* Backdrop */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setNotificationsOpen(false)}
+                />
+                {/* Dropdown */}
+                <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-zinc-200 bg-white py-2 shadow-xl animate-in fade-in slide-in-from-top-2">
+                  <div className="px-4 py-2 border-b border-zinc-100 mb-1">
+                    <h3 className="text-sm font-bold text-zinc-900">Notifications</h3>
+                  </div>
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {loadingNotifications ? (
+                      <div className="px-4 py-8 text-center text-sm text-zinc-500">
+                        Loading...
+                      </div>
+                    ) : notifications.length > 0 ? (
+                      notifications.map((note, i) => (
+                        <div key={i} className="px-4 py-3 hover:bg-zinc-50 transition-colors border-b border-zinc-50 last:border-0">
+                          <p className="text-sm text-zinc-800 leading-snug">{note.text}</p>
+                          <p className="text-[10px] text-zinc-500 mt-1">{note.time}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-8 text-center text-sm text-zinc-500 italic">
+                        Nothing to show
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* Profile dropdown */}
           <div className="relative">
             <button
               type="button"
-              onClick={() => setProfileOpen((v) => !v)}
-              className="inline-flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 shadow-sm hover:bg-zinc-50"
+              onClick={() => {
+                setProfileOpen((v) => !v);
+                setNotificationsOpen(false);
+              }}
+              className="inline-flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-2.5 py-1.5 text-sm text-zinc-700 shadow-sm hover:bg-zinc-50"
             >
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-xs font-bold text-white">
-                {initials}
-              </span>
+              <div className="h-8 w-8 overflow-hidden rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600">
+                {profilePhoto ? (
+                  <img src={profilePhoto} alt={userName} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="grid h-full w-full place-items-center text-xs font-bold text-white">
+                    {initials}
+                  </div>
+                )}
+              </div>
               <div className="hidden leading-tight sm:block text-left">
-                <p className="text-sm font-semibold text-zinc-900">{userName}</p>
-                <p className="text-xs text-zinc-500 capitalize">{role}</p>
+                <p className="text-sm font-semibold text-zinc-900 truncate max-w-[100px]">{userName}</p>
+                <p className="text-[10px] text-zinc-500 capitalize">{role}</p>
               </div>
               <BiChevronDown className="hidden h-4 w-4 text-zinc-500 sm:block" />
             </button>

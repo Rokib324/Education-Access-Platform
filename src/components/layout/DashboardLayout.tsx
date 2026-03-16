@@ -53,7 +53,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="mx-auto flex max-w-7xl">
         <Sidebar role={user.role} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <Topbar role={user.role} userName={user.full_name} />
+          <Topbar 
+            role={user.role} 
+            userName={user.full_name} 
+            profilePhoto={user.profile_photo}
+          />
           <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
         </div>
       </div>
