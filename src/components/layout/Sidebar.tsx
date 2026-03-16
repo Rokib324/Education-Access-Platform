@@ -48,7 +48,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Overview",
     items: [
       {
-        href: "/dashboard/dashboard",
+        href: "/dashboard",
         label: "Dashboard",
         icon: <BiHome className="h-5 w-5" />,
         roles: ["student", "teacher", "admin"],
@@ -200,19 +200,21 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
       {/* ── Logo ─────────────────────────────────────────────────────────── */}
       <div className="flex h-16 items-center justify-between border-b border-zinc-100 px-3 shrink-0">
         {!collapsed && (
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-zinc-900 text-xs font-bold text-white">
               EA
             </span>
             <span className="text-sm font-semibold text-zinc-900 leading-tight">
               EduAccess
             </span>
-          </div>
+          </Link>
         )}
         {collapsed && (
-          <span className="mx-auto grid h-8 w-8 place-items-center rounded-lg bg-zinc-900 text-xs font-bold text-white">
-            EA
-          </span>
+          <Link href="/" className="mx-auto block hover:opacity-80 transition-opacity">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-zinc-900 text-xs font-bold text-white">
+              EA
+            </span>
+          </Link>
         )}
         <button
           onClick={() => setCollapsed((c) => !c)}
@@ -254,7 +256,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
                 {visibleItems.map((item) => {
                   const isActive =
                     pathname === item.href ||
-                    (item.href !== "/dashboard/dashboard" &&
+                    (item.href !== "/dashboard" &&
                       pathname.startsWith(item.href));
                   return (
                     <li key={item.href}>

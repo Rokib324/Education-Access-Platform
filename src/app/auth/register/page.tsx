@@ -56,7 +56,7 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push("/dashboard/dashboard");
+      router.push("/dashboard");
       router.refresh();
     } catch {
       setError("Network error. Please check your connection.");
