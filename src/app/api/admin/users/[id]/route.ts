@@ -6,7 +6,7 @@ import { getTokenFromRequest } from "@/lib/auth/sessions";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const payload = await getTokenFromRequest(req);
@@ -14,9 +14,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
-    const { full_name, email, role, is_banned, status } = body;
+    const { full_name, email, role, is_banned, status, gender } = body;
 
     await connectDB();
 
@@ -25,6 +25,7 @@ export async function PATCH(
     if (email) updateData.email = email;
     if (is_banned !== undefined) updateData.is_banned = is_banned;
     if (status) updateData.status = status;
+    if (gender) updateData.gender = gender;
 
     if (role) {
       const roleDoc = await Role.findOne({ role_name: role });
@@ -48,7 +49,7 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const payload = await getTokenFromRequest(req);
@@ -56,7 +57,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     await connectDB();
 

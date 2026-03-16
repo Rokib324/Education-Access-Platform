@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { full_name, email, password, role } = body;
+    const { full_name, email, password, role, gender } = body;
 
     if (!full_name || !email || !password || !role) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
       email,
       password_hash,
       role_id: roleDoc._id,
+      gender: gender || "male",
       notification_preferences: {
         course_updates: true,
         forum_mentions: true,

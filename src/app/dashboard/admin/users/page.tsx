@@ -24,6 +24,8 @@ interface User {
   };
   status: "active" | "banned";
   is_banned: boolean;
+  gender: "male" | "female" | "other";
+  profile_photo?: string;
   createdAt: string;
 }
 
@@ -38,7 +40,8 @@ export default function AdminUsersPage() {
     full_name: "",
     email: "",
     password: "",
-    role: "student"
+    role: "student",
+    gender: "male"
   });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error", text: string } | null>(null);
@@ -69,7 +72,8 @@ export default function AdminUsersPage() {
         full_name: user.full_name,
         email: user.email,
         password: "", // Don't show password on edit
-        role: user.role_id.role_name
+        role: user.role_id.role_name,
+        gender: user.gender || "male"
       });
     } else {
       setEditingUser(null);
@@ -77,7 +81,8 @@ export default function AdminUsersPage() {
         full_name: "",
         email: "",
         password: "",
-        role: activeTab
+        role: activeTab,
+        gender: "male"
       });
     }
     setShowModal(true);
@@ -226,10 +231,24 @@ export default function AdminUsersPage() {
                   <tr key={user._id} className="hover:bg-zinc-50/50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-50 to-violet-50 flex items-center justify-center border border-indigo-100/50">
-                          <span className="text-sm font-bold text-indigo-600">
-                            {user.full_name.charAt(0)}
-                          </span>
+                        <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center border border-zinc-200 overflow-hidden shrink-0">
+                          {user.profile_photo ? (
+                            <img src={user.profile_photo} alt={user.full_name} className="h-full w-full object-cover" />
+                          ) : (
+                            <img 
+                              src={
+                                user.role_id.role_name === "teacher"
+                                  ? user.gender === "female" 
+                                    ? "/female-teacher-default-image.png"
+                                    : "/male-teacher-default-image.png"
+                                  : user.gender === "female"
+                                    ? "/girl-student-default-image.png"
+                                    : "/boy-student-default-image.png"
+                              } 
+                              alt={user.full_name} 
+                              className="h-full w-full object-cover"
+                            />
+                          )}
                         </div>
                         <div>
                           <p className="font-semibold text-zinc-900">{user.full_name}</p>
@@ -364,6 +383,19 @@ export default function AdminUsersPage() {
                   <option value="student">Student</option>
                   <option value="teacher">Teacher</option>
                   <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-zinc-700">Gender</label>
+                <select
+                  value={formData.gender}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value as any })}
+                  className="w-full rounded-xl border border-zinc-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all bg-white"
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
                 </select>
               </div>
 

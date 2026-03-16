@@ -8,6 +8,7 @@ export interface IUser extends Document {
     profile_photo?: string;
     bio?: string;
     location?: string;
+    gender: "male" | "female" | "other";
     status: "active" | "banned";
     is_banned: boolean;
     notification_preferences: {
@@ -35,6 +36,7 @@ const UserSchema = new Schema<IUser>(
             required: true,
         },
         profile_photo: { type: String, default: "" },
+        gender: { type: String, enum: ["male", "female", "other"], default: "male" },
         bio: { type: String, default: "" },
         location: { type: String, default: "" },
         status: { type: String, enum: ["active", "banned"], default: "active" },
