@@ -8,6 +8,8 @@ export interface IUser extends Document {
     profile_photo?: string;
     bio?: string;
     location?: string;
+    status: "active" | "banned";
+    is_banned: boolean;
     notification_preferences: {
         course_updates: boolean;
         forum_mentions: boolean;
@@ -35,6 +37,8 @@ const UserSchema = new Schema<IUser>(
         profile_photo: { type: String, default: "" },
         bio: { type: String, default: "" },
         location: { type: String, default: "" },
+        status: { type: String, enum: ["active", "banned"], default: "active" },
+        is_banned: { type: Boolean, default: false },
         notification_preferences: {
             course_updates: { type: Boolean, default: true },
             forum_mentions: { type: Boolean, default: true },
