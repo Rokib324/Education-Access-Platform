@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
         profile_photo: user.profile_photo,
         bio: user.bio,
         location: user.location,
+        notification_preferences: user.notification_preferences,
         created_at: user.created_at,
       },
     });

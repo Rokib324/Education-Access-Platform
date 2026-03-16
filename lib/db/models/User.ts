@@ -8,6 +8,11 @@ export interface IUser extends Document {
     profile_photo?: string;
     bio?: string;
     location?: string;
+    notification_preferences: {
+        course_updates: boolean;
+        forum_mentions: boolean;
+        live_classes: boolean;
+    };
     created_at: Date;
 }
 
@@ -30,6 +35,11 @@ const UserSchema = new Schema<IUser>(
         profile_photo: { type: String, default: "" },
         bio: { type: String, default: "" },
         location: { type: String, default: "" },
+        notification_preferences: {
+            course_updates: { type: Boolean, default: true },
+            forum_mentions: { type: Boolean, default: true },
+            live_classes: { type: Boolean, default: true },
+        },
         created_at: { type: Date, default: Date.now },
     },
     { timestamps: true }

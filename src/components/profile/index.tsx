@@ -18,6 +18,11 @@ interface UserProfile {
   role: UserRole;
   profile_photo?: string;
   location?: string;
+  notification_preferences?: {
+    course_updates: boolean;
+    forum_mentions: boolean;
+    live_classes: boolean;
+  };
   created_at: string;
 }
 
@@ -37,6 +42,17 @@ const ProfilePage = () => {
     bio: "",
   });
 
+  const [securityData, setSecurityData] = useState({
+    current_password: "",
+    new_password: "",
+  });
+
+  const [notificationPrefs, setNotificationPrefs] = useState({
+    course_updates: true,
+    forum_mentions: true,
+    live_classes: true,
+  });
+
   useEffect(() => {
     fetch("/api/auth/me")
       .then((res) => {
@@ -53,6 +69,9 @@ const ProfilePage = () => {
             full_name: data.user.full_name || "",
             bio: data.user.bio || "",
           });
+          if (data.user.notification_preferences) {
+            setNotificationPrefs(data.user.notification_preferences);
+          }
         }
       })
       .catch((err) => console.error("[ProfilePage]", err))
@@ -112,6 +131,62 @@ const ProfilePage = () => {
       setMessage({ type: "error", text: err.message });
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdating(true);
+    setMessage(null);
+
+    try {
+      const res = await fetch("/api/user/password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(securityData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.error && typeof data.error === 'object') {
+           const firstError = Object.values(data.error)[0] as string[];
+           throw new Error(firstError[0]);
+        }
+        throw new Error(data.error || "Failed to update password");
+      }
+
+      setMessage({ type: "success", text: "Password updated successfully!" });
+      setSecurityData({ current_password: "", new_password: "" });
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleNotificationToggle = async (key: keyof typeof notificationPrefs) => {
+    const newVal = !notificationPrefs[key];
+    setNotificationPrefs(prev => ({ ...prev, [key]: newVal }));
+    setMessage(null);
+
+    try {
+      const res = await fetch("/api/user/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [key]: newVal }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update notification preferences");
+      }
+      // Re-sync user object if needed, though local state is updated
+      setUser(prev => prev ? { ...prev, notification_preferences: { ...notificationPrefs, [key]: newVal } } : null);
+    } catch (err: any) {
+      // Revert on error
+      setNotificationPrefs(prev => ({ ...prev, [key]: !newVal }));
+      setMessage({ type: "error", text: err.message });
     }
   };
 
@@ -321,7 +396,7 @@ const ProfilePage = () => {
           )}
 
           {activeTab === "security" && (
-            <div className="space-y-6 animate-in fade-in">
+            <form onSubmit={handleUpdatePassword} className="space-y-6 animate-in fade-in">
               <div>
                 <h3 className="text-lg font-bold text-zinc-900">Update Password</h3>
                 <p className="mt-1 text-sm text-zinc-500">
@@ -329,11 +404,22 @@ const ProfilePage = () => {
                 </p>
               </div>
 
+              {message && (
+                <div className={`rounded-lg px-4 py-3 text-sm ${
+                  message.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-red-50 text-red-700 border border-red-100"
+                }`}>
+                  {message.text}
+                </div>
+              )}
+
               <div className="space-y-4 max-w-md">
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-zinc-700">Current Password</label>
                   <input
                     type="password"
+                    required
+                    value={securityData.current_password}
+                    onChange={(e) => setSecurityData({ ...securityData, current_password: e.target.value })}
                     className="w-full rounded-lg border border-zinc-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/20 focus:border-zinc-900 transition-all"
                   />
                 </div>
@@ -341,17 +427,24 @@ const ProfilePage = () => {
                   <label className="text-sm font-medium text-zinc-700">New Password</label>
                   <input
                     type="password"
+                    required
+                    value={securityData.new_password}
+                    onChange={(e) => setSecurityData({ ...securityData, new_password: e.target.value })}
                     className="w-full rounded-lg border border-zinc-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/20 focus:border-zinc-900 transition-all"
                   />
                 </div>
               </div>
 
               <div className="flex justify-end border-t border-zinc-100 pt-5">
-                <button className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 transition-colors">
-                  Update Password
+                <button 
+                  type="submit"
+                  disabled={isUpdating}
+                  className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                >
+                  {isUpdating ? "Updating..." : "Update Password"}
                 </button>
               </div>
-            </div>
+            </form>
           )}
 
           {activeTab === "notifications" && (
@@ -363,19 +456,32 @@ const ProfilePage = () => {
                 </p>
               </div>
 
+              {message && (
+                <div className={`rounded-lg px-4 py-3 text-sm ${
+                  message.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-red-50 text-red-700 border border-red-100"
+                }`}>
+                  {message.text}
+                </div>
+              )}
+
               <div className="space-y-4 divide-y divide-zinc-100">
                 {[
-                  { title: "Course Updates", desc: "New lessons or materials added to your courses." },
-                  { title: "Forum mentions", desc: "When someone replies to your post or mentions you." },
-                  { title: "Live Classes", desc: "Reminders about upcoming scheduled live classes." },
-                ].map((pref, i) => (
-                  <div key={i} className="flex items-center justify-between pt-4 first:pt-0">
+                  { key: "course_updates", title: "Course Updates", desc: "New lessons or materials added to your courses." },
+                  { key: "forum_mentions", title: "Forum mentions", desc: "When someone replies to your post or mentions you." },
+                  { key: "live_classes", title: "Live Classes", desc: "Reminders about upcoming scheduled live classes." },
+                ].map((pref) => (
+                  <div key={pref.key} className="flex items-center justify-between pt-4 first:pt-0">
                     <div>
                       <h4 className="text-sm font-medium text-zinc-900">{pref.title}</h4>
                       <p className="text-xs text-zinc-500 mt-1">{pref.desc}</p>
                     </div>
                     <label className="relative inline-flex cursor-pointer items-center">
-                      <input type="checkbox" defaultChecked className="peer sr-only" />
+                      <input 
+                        type="checkbox" 
+                        checked={notificationPrefs[pref.key as keyof typeof notificationPrefs]} 
+                        onChange={() => handleNotificationToggle(pref.key as keyof typeof notificationPrefs)}
+                        className="peer sr-only" 
+                      />
                       <div className="h-6 w-11 rounded-full bg-zinc-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-zinc-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-zinc-900 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none"></div>
                     </label>
                   </div>
