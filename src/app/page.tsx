@@ -1,3 +1,5 @@
+import AboutHero from "@/components/AboutHero";
+import ContactForm from "@/components/ContactForm";
 import Features from "@/components/Features";
 import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
@@ -12,6 +14,8 @@ export default function Home() {
       <Hero />
       <Features />
       <HowItsWorks />
+      <AboutHero />
+      <ContactForm /> 
       <Footer />
     </div>
   );

@@ -81,7 +81,7 @@ const HIGHLIGHTS = [
 
 const Features = () => {
   return (
-    <section className="relative overflow-hidden bg-zinc-950 py-20 md:py-28">
+    <section id="features" className="relative overflow-hidden bg-zinc-950 py-20 md:py-28">
       {/* Background glow */}
       <div className="pointer-events-none absolute right-0 top-0 h-[400px] w-[400px] rounded-full bg-violet-600/10 blur-[100px]" />
       <div className="pointer-events-none absolute bottom-0 left-0 h-[300px] w-[300px] rounded-full bg-indigo-600/10 blur-[80px]" />

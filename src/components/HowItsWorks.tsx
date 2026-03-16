@@ -64,7 +64,7 @@ const LIVE_STEPS = [
 
 const HowItWorks = () => {
   return (
-    <section className="relative overflow-hidden bg-zinc-900 py-20 md:py-28">
+    <section id="how-it-works" className="relative overflow-hidden bg-zinc-900 py-20 md:py-28">
       {/* Glows */}
       <div className="pointer-events-none absolute left-0 top-1/2 h-[400px] w-[400px] -translate-y-1/2 rounded-full bg-emerald-600/10 blur-[100px]" />
       <div className="pointer-events-none absolute right-0 top-1/2 h-[400px] w-[400px] -translate-y-1/2 rounded-full bg-red-600/10 blur-[100px]" />
