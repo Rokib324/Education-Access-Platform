@@ -6,6 +6,7 @@ export interface ILearningProfile extends Document {
     current_level: "beginner" | "intermediate" | "advanced";
     strengths: string[];
     weaknesses: string[];
+    interests: string[];
 }
 
 const LearningProfileSchema = new Schema<ILearningProfile>(
@@ -28,6 +29,7 @@ const LearningProfileSchema = new Schema<ILearningProfile>(
         },
         strengths: [{ type: String }],
         weaknesses: [{ type: String }],
+        interests: [{ type: String, trim: true }],
     },
     { timestamps: true }
 );

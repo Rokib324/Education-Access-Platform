@@ -30,6 +30,8 @@ const getIconForType = (type: string) => {
 
 // Importing icons locally to avoid reference errors if not passed
 import { BiBookOpen, BiDesktop, BiStar, BiUser } from "react-icons/bi";
+import CourseRecommendations from "@/components/CourseRecommendations";
+import InterestSelection from "@/components/InterestSelection";
 
 export default function StudentDashboard() {
   const [stats, setStats] = useState([
@@ -132,6 +134,15 @@ export default function StudentDashboard() {
                 <p className="text-sm text-zinc-500 text-center py-4">No recent activity.</p>
             )}
           </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <CourseRecommendations />
+        </div>
+        <div>
+          <InterestSelection />
         </div>
       </div>
 

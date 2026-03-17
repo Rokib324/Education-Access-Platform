@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTokenFromRequest } from "@/lib/auth/sessions";
-import { getRecommendationsForStudent, createRecommendation } from "@/lib/services/recommendation.service";
+import { getRecommendationsForStudent, createRecommendation, getInterestBasedRecommendations } from "@/lib/services/recommendation.service";
 import { z } from "zod";
 
 const createRecommendationSchema = z.object({
@@ -22,8 +22,15 @@ export async function GET(req: NextRequest) {
                 ? payload.userId
                 : searchParams.get("studentId") || payload.userId;
 
-        const recommendations = await getRecommendationsForStudent(studentId);
-        return NextResponse.json({ recommendations });
+        const [individual, interestBased] = await Promise.all([
+            getRecommendationsForStudent(studentId),
+            getInterestBasedRecommendations(studentId)
+        ]);
+
+        return NextResponse.json({ 
+            recommendations: individual,
+            interestBased 
+        });
     } catch (err) {
         console.error("[RECOMMENDATIONS GET]", err);
         return NextResponse.json({ error: "Failed to fetch recommendations." }, { status: 500 });

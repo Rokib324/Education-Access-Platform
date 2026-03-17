@@ -5,6 +5,7 @@ export const updateProfileSchema = z.object({
   bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
   profile_photo: z.string().optional(),
   location: z.string().max(100).optional(),
+  interests: z.array(z.string()).optional(),
 });
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
