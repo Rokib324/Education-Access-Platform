@@ -1,4 +1,7 @@
+"use client";
+
 import React from 'react'
+import { motion } from 'framer-motion'
 import { BiAward, BiBullseye, BiHeart, BiWorld } from 'react-icons/bi'
 
 const MISSION_ITEMS = [
@@ -20,6 +23,27 @@ const MISSION_ITEMS = [
 ];
 
 const AboutHero = () => {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1, 
+      transition: { 
+        staggerChildren: 0.2 
+      } 
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1, 
+      transition: { 
+        duration: 0.5 
+      } 
+    }
+  };
+
   return (
     <section id="about" className="relative overflow-hidden bg-zinc-950 py-24 lg:py-32">
       {/* Background glow blobs */}
@@ -41,7 +65,13 @@ const AboutHero = () => {
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
           {/* Left - Narrative */}
-          <div className="max-w-xl">
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="max-w-xl"
+          >
             <span className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-400">
               About EduAccess
             </span>
@@ -58,27 +88,40 @@ const AboutHero = () => {
               By offering offline-ready lessons, virtual classrooms, and a supportive community, we're not just providing a platform—we're opening doors to a future filled with opportunity for everyone, everywhere.
             </p>
 
-            <div className="mt-10 flex items-center gap-4 border-t border-white/8 pt-8">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="mt-10 flex items-center gap-4 border-t border-white/8 pt-8"
+            >
               <div className="flex -space-x-3">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-10 w-10 rounded-full border-2 border-zinc-950 bg-zinc-800 ring-2 ring-indigo-500/20" />
+                  <div key={i} className="h-10 w-10 rounded-full border-2 border-zinc-950 bg-zinc-800 ring-2 ring-indigo-500/20 transition-transform hover:scale-110 hover:z-10 cursor-pointer" />
                 ))}
               </div>
               <p className="text-sm font-medium text-zinc-300">
                 Join our growing team of passionate educators and creators.
               </p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Right - Mission Cards */}
-          <div className="grid gap-4 sm:grid-cols-1">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid gap-4 sm:grid-cols-1"
+          >
             {MISSION_ITEMS.map((item, idx) => (
-              <div 
+              <motion.div 
                 key={idx}
-                className="group relative overflow-hidden rounded-2xl border border-white/8 bg-zinc-900/40 p-6 backdrop-blur-md transition-all hover:border-white/15"
+                variants={itemVariants}
+                whileHover={{ x: 10 }}
+                className="group relative overflow-hidden rounded-2xl border border-white/8 bg-zinc-900/40 p-6 backdrop-blur-md transition-all hover:border-white/15 hover:bg-zinc-900/60"
               >
                 <div className="flex gap-4">
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/20">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/20 transition-transform group-hover:scale-110">
                     {item.icon}
                   </div>
                   <div>
@@ -90,11 +133,17 @@ const AboutHero = () => {
                     </p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
             
             {/* Decorative Achievement Card */}
-            <div className="mt-2 flex items-center justify-between rounded-2xl bg-gradient-to-br from-indigo-500/10 to-violet-500/10 border border-indigo-500/20 p-6">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.6 }}
+              className="mt-2 flex items-center justify-between rounded-2xl bg-gradient-to-br from-indigo-500/10 to-violet-500/10 border border-indigo-500/20 p-6 transition-all hover:bg-opacity-20"
+            >
               <div className="flex items-center gap-3">
                 <div className="grid h-12 w-12 place-items-center rounded-full bg-indigo-500/20 text-indigo-400">
                   <BiAward className="h-6 w-6" />
@@ -104,8 +153,8 @@ const AboutHero = () => {
                   <p className="text-sm font-medium text-zinc-400">Empowering 50+ remote schools</p>
                 </div>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </section>

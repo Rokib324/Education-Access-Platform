@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   BiDownload,
   BiWifi,
@@ -63,6 +66,16 @@ const LIVE_STEPS = [
 ];
 
 const HowItWorks = () => {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.2 } },
+  };
+
+  const cardVariants = {
+    hidden: { x: -20, opacity: 0 },
+    visible: { x: 0, opacity: 1, transition: { duration: 0.5 } },
+  };
+
   return (
     <section id="how-it-works" className="relative overflow-hidden bg-zinc-900 py-20 md:py-28">
       {/* Glows */}
@@ -72,7 +85,13 @@ const HowItWorks = () => {
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         {/* Header */}
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
-          <div className="max-w-2xl">
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="max-w-2xl"
+          >
             <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-zinc-400">
               How it works
             </span>
@@ -86,9 +105,15 @@ const HowItWorks = () => {
               Designed for remote communities — learn offline when you need to,
               then connect for live teaching when possible.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="flex shrink-0 gap-2">
+          <motion.div 
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="flex shrink-0 gap-2"
+          >
             <Link
               href="/auth/register"
               className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:opacity-90 transition-opacity"
@@ -101,13 +126,19 @@ const HowItWorks = () => {
             >
               Browse Courses
             </Link>
-          </div>
+          </motion.div>
         </div>
 
         {/* Two track layout */}
         <div className="mt-14 grid gap-6 lg:grid-cols-2">
           {/* Track 1: Offline */}
-          <div className="rounded-2xl border border-white/8 bg-zinc-950/60 p-6 backdrop-blur">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            className="rounded-2xl border border-white/8 bg-zinc-950/60 p-6 backdrop-blur"
+          >
             <div className="mb-6 flex items-center gap-2">
               <div className="h-1 flex-1 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" />
               <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">
@@ -117,16 +148,18 @@ const HowItWorks = () => {
             </div>
             <div className="space-y-4">
               {OFFLINE_STEPS.map((s) => (
-                <div
+                <motion.div
                   key={s.step}
-                  className="flex items-start gap-4 rounded-xl border border-white/6 bg-white/3 p-4 transition-colors hover:bg-white/6"
+                  variants={cardVariants}
+                  whileHover={{ x: 10 }}
+                  className="flex items-start gap-4 rounded-xl border border-white/6 bg-white/3 p-4 transition-colors hover:bg-white/6 group"
                 >
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/20">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/20 transition-transform group-hover:scale-110">
                     {s.icon}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold tracking-widest text-zinc-600">
+                      <span className="text-[10px] font-bold tracking-widest text-zinc-600 transition-colors group-hover:text-emerald-400">
                         STEP {s.step}
                       </span>
                       <span
@@ -135,20 +168,26 @@ const HowItWorks = () => {
                         {s.badge}
                       </span>
                     </div>
-                    <h3 className="mt-0.5 text-sm font-bold text-white">
+                    <h3 className="mt-0.5 text-sm font-bold text-white transition-colors group-hover:text-emerald-300">
                       {s.title}
                     </h3>
                     <p className="mt-1 text-xs leading-relaxed text-zinc-500">
                       {s.desc}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Track 2: Live Classes */}
-          <div className="rounded-2xl border border-white/8 bg-zinc-950/60 p-6 backdrop-blur">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            className="rounded-2xl border border-white/8 bg-zinc-950/60 p-6 backdrop-blur"
+          >
             <div className="mb-6 flex items-center gap-2">
               <div className="h-1 flex-1 rounded-full bg-gradient-to-r from-red-500 to-rose-500" />
               <span className="text-xs font-bold uppercase tracking-widest text-red-400">
@@ -158,16 +197,18 @@ const HowItWorks = () => {
             </div>
             <div className="space-y-4">
               {LIVE_STEPS.map((s) => (
-                <div
+                <motion.div
                   key={s.step}
-                  className="flex items-start gap-4 rounded-xl border border-white/6 bg-white/3 p-4 transition-colors hover:bg-white/6"
+                  variants={cardVariants}
+                  whileHover={{ x: 10 }}
+                  className="flex items-start gap-4 rounded-xl border border-white/6 bg-white/3 p-4 transition-colors hover:bg-white/6 group"
                 >
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/20">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/20 transition-transform group-hover:scale-110">
                     {s.icon}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold tracking-widest text-zinc-600">
+                      <span className="text-[10px] font-bold tracking-widest text-zinc-600 transition-colors group-hover:text-red-400">
                         STEP {s.step}
                       </span>
                       <span
@@ -176,21 +217,27 @@ const HowItWorks = () => {
                         {s.badge}
                       </span>
                     </div>
-                    <h3 className="mt-0.5 text-sm font-bold text-white">
+                    <h3 className="mt-0.5 text-sm font-bold text-white transition-colors group-hover:text-red-300">
                       {s.title}
                     </h3>
                     <p className="mt-1 text-xs leading-relaxed text-zinc-500">
                       {s.desc}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Bottom CTA strip */}
-        <div className="mt-10 flex flex-col items-center justify-between gap-5 rounded-2xl border border-indigo-500/20 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 px-8 py-6 text-center md:flex-row md:text-left">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="mt-10 flex flex-col items-center justify-between gap-5 rounded-2xl border border-indigo-500/20 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 px-8 py-6 text-center md:flex-row md:text-left"
+        >
           <div>
             <p className="text-base font-bold text-white">
               Ready to bridge the education gap?
@@ -205,7 +252,7 @@ const HowItWorks = () => {
           >
             Start for Free →
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

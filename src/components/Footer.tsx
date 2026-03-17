@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   BiLogoFacebook,
   BiLogoTwitter,
@@ -43,7 +46,13 @@ const Footer = () => {
       <div className="pointer-events-none absolute bottom-0 left-1/2 h-[300px] w-[600px] -translate-x-1/2 rounded-full bg-indigo-600/8 blur-[80px]" />
 
       <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6">
-        <div className="grid gap-10 md:grid-cols-5">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="grid gap-10 md:grid-cols-5"
+        >
           {/* Brand col — spans 2 */}
           <div className="md:col-span-2">
             <div className="flex items-center gap-2.5">
@@ -70,7 +79,7 @@ const Footer = () => {
                   key={s.label}
                   href={s.href}
                   aria-label={s.label}
-                  className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 text-zinc-400 transition-colors hover:bg-indigo-500/20 hover:text-indigo-300"
+                  className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 text-zinc-400 transition-all hover:bg-indigo-500/20 hover:text-indigo-300 hover:scale-110"
                 >
                   {s.icon}
                 </a>
@@ -153,19 +162,25 @@ const Footer = () => {
                   placeholder="Email address"
                   className="flex-1 min-w-0 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
-                <button className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-3 py-2 text-xs font-bold text-white hover:opacity-90 transition-opacity">
+                <button className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-3 py-2 text-xs font-bold text-white hover:opacity-90 transition-all hover:scale-105">
                   →
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Divider */}
         <div className="mt-12 border-t border-white/8" />
 
         {/* Bottom row */}
-        <div className="mt-6 flex flex-col items-center justify-between gap-4 text-xs text-zinc-600 md:flex-row">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, delay: 0.4 }}
+          className="mt-6 flex flex-col items-center justify-between gap-4 text-xs text-zinc-600 md:flex-row"
+        >
           <p>
             © {new Date().getFullYear()} EduAccess. All rights reserved. Built
             to bridge the education gap.
@@ -185,7 +200,7 @@ const Footer = () => {
               All systems operational
             </span>
           </div>
-        </div>
+        </motion.div>
       </div>
     </footer>
   );

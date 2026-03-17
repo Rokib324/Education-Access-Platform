@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import {
   BiBook,
   BiDownload,
@@ -80,6 +83,16 @@ const HIGHLIGHTS = [
 ];
 
 const Features = () => {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.15 } },
+  };
+
+  const itemVariants = {
+    hidden: { y: 30, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.6 } },
+  };
+
   return (
     <section id="features" className="relative overflow-hidden bg-zinc-950 py-20 md:py-28">
       {/* Background glow */}
@@ -88,7 +101,13 @@ const Features = () => {
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         {/* Section header */}
-        <div className="mx-auto max-w-2xl text-center">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="mx-auto max-w-2xl text-center"
+        >
           <span className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-400">
             Why EduAccess
           </span>
@@ -103,21 +122,23 @@ const Features = () => {
             Everything learners and educators need — designed for limited
             connectivity and real-world constraints.
           </p>
-        </div>
+        </motion.div>
 
         {/* Feature cards */}
-        <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        >
           {features.map((f) => (
-            <div
+            <motion.div
               key={f.title}
-              className="group relative overflow-hidden rounded-2xl border border-white/8 bg-zinc-900/60 p-6 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-white/15 hover:shadow-2xl"
+              variants={itemVariants}
+              whileHover={{ y: -8 }}
+              className="group relative overflow-hidden rounded-2xl border border-white/8 bg-zinc-900/60 p-6 backdrop-blur transition-all duration-300 hover:border-white/15 hover:shadow-2xl"
             >
-              {/* Hover glow */}
-              <div
-                className={`absolute inset-0 rounded-2xl bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${f.color} blur-2xl`}
-                style={{ opacity: 0 }}
-              />
-
               <div className="relative">
                 {/* Icon */}
                 <div
@@ -126,40 +147,46 @@ const Features = () => {
                   {f.icon}
                 </div>
 
-                <h3 className="mt-4 text-base font-bold text-white">
+                <h3 className="mt-4 text-base font-bold text-white transition-colors group-hover:text-indigo-400">
                   {f.title}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-400">
                   {f.description}
                 </p>
 
-                <div className="mt-5 flex items-center justify-between border-t border-white/8 pt-4">
+                <div className="mt-5 flex items-center justify-between border-t border-white/8 pt-4 opacity-70 group-hover:opacity-100 transition-opacity">
                   <span className="text-[11px] text-zinc-600">{f.detail}</span>
                   <span
-                    className={`rounded-full bg-gradient-to-r px-2.5 py-0.5 text-[11px] font-semibold text-white ${f.color}`}
+                    className={`rounded-full bg-gradient-to-r px-2.5 py-0.5 text-[11px] font-semibold text-white ${f.color} shadow-lg shadow-indigo-500/10 transition-transform group-hover:scale-110`}
                   >
                     Explore →
                   </span>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Highlight bar */}
-        <div className="mt-10 grid gap-4 rounded-2xl border border-white/8 bg-zinc-900/50 p-6 backdrop-blur md:grid-cols-3">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="mt-10 grid gap-4 rounded-2xl border border-white/8 bg-zinc-900/50 p-6 backdrop-blur md:grid-cols-3"
+        >
           {HIGHLIGHTS.map((h) => (
-            <div key={h.label} className="flex gap-3">
-              <div className="mt-0.5 h-4 w-1 shrink-0 rounded-full bg-gradient-to-b from-indigo-500 to-violet-500" />
+            <div key={h.label} className="flex gap-3 group">
+              <div className="mt-0.5 h-4 w-1 shrink-0 rounded-full bg-gradient-to-b from-indigo-500 to-violet-500 group-hover:scale-y-125 transition-transform" />
               <div>
-                <p className="text-sm font-bold text-white">{h.label}</p>
+                <p className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">{h.label}</p>
                 <p className="mt-1 text-xs leading-relaxed text-zinc-500">
                   {h.desc}
                 </p>
               </div>
             </div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
