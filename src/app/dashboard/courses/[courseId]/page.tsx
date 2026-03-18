@@ -17,8 +17,11 @@ import {
   BiLoader,
   BiArrowBack,
   BiSortAlt2,
+  BiUser,
+  BiCheck,
 } from "react-icons/bi";
 import OfflineButton from "@/components/lessons/OfflineButton";
+import EnrolledStudentsList from "@/components/courses/EnrolledStudentsList";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Course = {
@@ -45,6 +48,8 @@ type LessonFormState = {
   difficulty_level: "easy" | "medium" | "hard";
   sequence_no: number;
 };
+
+type LessonProgressMap = Record<string, number>; // lessonId → completion_percentage
 
 const EMPTY_LESSON_FORM: LessonFormState = {
   title: "",
@@ -212,17 +217,47 @@ function LessonRow({
   onDelete,
   deleting,
   isTeacherOrAdmin,
+  isEnrolled,
+  enrollmentId,
+  progress,
+  onProgressUpdate,
 }: {
   lesson: Lesson;
   onEdit: (l: Lesson) => void;
   onDelete: (id: string) => void;
   deleting: boolean;
   isTeacherOrAdmin: boolean;
+  isEnrolled: boolean;
+  enrollmentId: string | null;
+  progress: number;
+  onProgressUpdate: (lessonId: string, pct: number) => void;
 }) {
+  const [marking, setMarking] = useState(false);
+  const isDone = progress >= 100;
+
+  const markComplete = async () => {
+    if (!enrollmentId || isDone) return;
+    setMarking(true);
+    try {
+      const res = await fetch(`/api/enrollments/${enrollmentId}/progress`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lessonId: lesson._id, completion_percentage: 100 }),
+      });
+      if (res.ok) onProgressUpdate(lesson._id, 100);
+    } finally {
+      setMarking(false);
+    }
+  };
+
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-zinc-200 bg-white px-5 py-3.5 shadow-sm hover:shadow-md transition-shadow">
-      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-zinc-100 text-sm font-bold text-zinc-600">
-        {lesson.sequence_no}
+    <div className={`flex items-center gap-4 rounded-xl border px-5 py-3.5 shadow-sm transition-all ${
+      isDone ? "border-emerald-200 bg-emerald-50/40" : "border-zinc-200 bg-white hover:shadow-md"
+    }`}>
+      <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg text-sm font-bold ${
+        isDone ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-600"
+      }`}>
+        {isDone ? <BiCheck className="h-5 w-5" /> : lesson.sequence_no}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-2">
@@ -233,12 +268,44 @@ function LessonRow({
           <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize ${DIFFICULTY_COLORS[lesson.difficulty_level]}`}>
             {lesson.difficulty_level}
           </span>
+          {isDone && (
+            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+              Completed
+            </span>
+          )}
         </div>
-        <h3 className="mt-1 text-sm font-semibold text-zinc-900 leading-snug truncate">{lesson.title}</h3>
+        <h3 className={`mt-1 text-sm font-semibold leading-snug truncate ${isDone ? "text-emerald-800 line-through decoration-emerald-400" : "text-zinc-900"}`}>
+          {lesson.title}
+        </h3>
+        {/* Progress bar for partial completion */}
+        {progress > 0 && progress < 100 && (
+          <div className="mt-1.5 h-1 w-full rounded-full bg-zinc-200">
+            <div
+              className="h-1 rounded-full bg-indigo-500 transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        {/* OfflineButton for students */}
         <OfflineButton lessonId={lesson._id} lessonTitle={lesson.title} size="sm" />
+
+        {/* Mark Complete — students only, when enrolled */}
+        {!isTeacherOrAdmin && isEnrolled && (
+          <button
+            onClick={markComplete}
+            disabled={marking || isDone}
+            title={isDone ? "Completed!" : "Mark as Complete"}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+              isDone
+                ? "cursor-default bg-emerald-100 text-emerald-700"
+                : "border border-indigo-200 text-indigo-600 hover:bg-indigo-50 disabled:opacity-50"
+            }`}
+          >
+            {marking ? <BiLoader className="h-3.5 w-3.5 animate-spin" /> : isDone ? "Done ✓" : "Mark Done"}
+          </button>
+        )}
+
         {isTeacherOrAdmin && (
           <>
             <button onClick={() => onEdit(lesson)}
@@ -256,7 +323,72 @@ function LessonRow({
   );
 }
 
+// ─── Enrollment Button for students in course header ─────────────────────────
+function CourseEnrollButton({ courseId }: { courseId: string }) {
+  const [enrollment, setEnrollment] = useState<{ _id: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/enrollments?courseId=${courseId}`)
+      .then((r) => r.json())
+      .then((d) => setEnrollment(d.enrollment ?? null))
+      .catch(() => setEnrollment(null))
+      .finally(() => setLoading(false));
+  }, [courseId]);
+
+  const enroll = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/enrollments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId }),
+      });
+      const data = await res.json();
+      if (res.ok) setEnrollment(data.enrollment);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const drop = async () => {
+    if (!enrollment || !confirm("Drop this course?")) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/enrollments/${enrollment._id}`, { method: "DELETE" });
+      if (res.ok) setEnrollment(null);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading) return <span className="h-9 w-24 animate-pulse rounded-xl bg-zinc-100 block" />;
+
+  return enrollment ? (
+    <button
+      onClick={drop}
+      disabled={busy}
+      className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
+    >
+      <BiCheckCircle className="h-4 w-4" />
+      {busy ? "…" : "Enrolled — Drop"}
+    </button>
+  ) : (
+    <button
+      onClick={enroll}
+      disabled={busy}
+      className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
+    >
+      {busy ? <BiLoader className="h-4 w-4 animate-spin" /> : <BiBookOpen className="h-4 w-4" />}
+      {busy ? "Enrolling…" : "Enroll Now"}
+    </button>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
+type Tab = "lessons" | "students";
+
 export default function CourseDetailPage() {
   const params = useParams<{ courseId: string }>();
   const courseId = params?.courseId ?? "";
@@ -268,7 +400,13 @@ export default function CourseDetailPage() {
   const [showModal, setShowModal] = useState(false);
   const [editLesson, setEditLesson] = useState<Lesson | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const { isTeacherOrAdmin } = useCurrentUser();
+  const [activeTab, setActiveTab] = useState<Tab>("lessons");
+  const [lessonProgress, setLessonProgress] = useState<LessonProgressMap>({});
+  const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+
+  const { user, isTeacherOrAdmin } = useCurrentUser();
+  const isStudent = user?.role === "student";
 
   const fetchData = useCallback(async () => {
     if (!courseId) return;
@@ -289,6 +427,49 @@ export default function CourseDetailPage() {
       setLoading(false);
     }
   }, [courseId]);
+
+  // Fetch student's enrollment status + lesson progress
+  useEffect(() => {
+    if (!isStudent || !courseId) return;
+    // enrollment status
+    fetch(`/api/enrollments?courseId=${courseId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.enrollment) {
+          setIsEnrolled(true);
+          setEnrollmentId(d.enrollment._id);
+        }
+      })
+      .catch(() => {});
+    // lesson progress
+    fetch("/api/enrollments")
+      .then((r) => r.json())
+      .then((d) => {
+        const enrollment = (d.enrollments ?? []).find(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (e: any) => e.course_id?._id === courseId
+        );
+        if (!enrollment) return;
+        // Build progress map from the enrollment's progress data via lesson list
+        // We'll also do a dedicated lesson progress fetch via the lessons endpoint
+      })
+      .catch(() => {});
+  }, [isStudent, courseId]);
+
+  // Fetch lesson-level progress for students
+  useEffect(() => {
+    if (!isStudent || !courseId || !enrollmentId) return;
+    fetch(`/api/lessons/progress?courseId=${courseId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const map: LessonProgressMap = {};
+        for (const p of d.progress ?? []) {
+          map[p.lesson_id] = p.completion_percentage;
+        }
+        setLessonProgress(map);
+      })
+      .catch(() => {});
+  }, [isStudent, courseId, enrollmentId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -312,6 +493,18 @@ export default function CourseDetailPage() {
     setShowModal(false);
     setEditLesson(null);
   };
+
+  const handleProgressUpdate = (lessonId: string, pct: number) => {
+    setLessonProgress((prev) => ({ ...prev, [lessonId]: pct }));
+    if (pct >= 100) {
+      const completedNow = Object.values({ ...lessonProgress, [lessonId]: pct }).filter((v) => v >= 100).length;
+      if (completedNow === lessons.length) setIsEnrolled(true); // stay enrolled (completed)
+    }
+  };
+
+  // Compute overall progress for the header pill
+  const completedCount = lessons.filter((l) => (lessonProgress[l._id] ?? 0) >= 100).length;
+  const overallPct = lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-24 text-zinc-400">
@@ -359,6 +552,16 @@ export default function CourseDetailPage() {
                   Vocational
                 </span>
               )}
+              {/* Student progress badge */}
+              {isStudent && isEnrolled && lessons.length > 0 && (
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  overallPct >= 100
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-indigo-100 text-indigo-700"
+                }`}>
+                  {overallPct >= 100 ? "✓ Completed" : `${overallPct}% done`}
+                </span>
+              )}
             </div>
             <h1 className="text-2xl font-bold text-zinc-900">{course.title}</h1>
             {course.description && (
@@ -370,10 +573,14 @@ export default function CourseDetailPage() {
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-xl bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-700">
               {lessons.length} lesson{lessons.length !== 1 ? "s" : ""}
             </span>
+            {/* Enroll button for students */}
+            {isStudent && <CourseEnrollButton courseId={courseId} />}
+            {/* Add Lesson button for teachers */}
             {isTeacherOrAdmin && (
               <button
                 onClick={() => { setEditLesson(null); setShowModal(true); }}
@@ -384,39 +591,83 @@ export default function CourseDetailPage() {
             )}
           </div>
         </div>
-      </div>
 
-      {/* Lessons */}
-      <div className="space-y-3">
-        {lessons.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 py-20 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 mb-4">
-              <BiBookOpen className="h-8 w-8 text-zinc-400" />
+        {/* Student progress bar */}
+        {isStudent && isEnrolled && lessons.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-zinc-100">
+            <div className="flex justify-between text-xs text-zinc-500 mb-1.5">
+              <span>Your progress</span>
+              <span>{completedCount}/{lessons.length} lessons completed</span>
             </div>
-            <h3 className="text-base font-semibold text-zinc-800">No lessons yet</h3>
-            <p className="mt-1 text-sm text-zinc-500">Add the first lesson to this course.</p>
-            {isTeacherOrAdmin && (
-              <button
-                onClick={() => { setEditLesson(null); setShowModal(true); }}
-                className="mt-6 flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-zinc-700"
-              >
-                <BiPlus className="h-4 w-4" /> Add First Lesson
-              </button>
-            )}
+            <div className="h-2 w-full rounded-full bg-zinc-200">
+              <div
+                className={`h-2 rounded-full transition-all duration-500 ${
+                  overallPct >= 100 ? "bg-emerald-500" : "bg-indigo-500"
+                }`}
+                style={{ width: `${overallPct}%` }}
+              />
+            </div>
           </div>
-        ) : (
-          lessons.map((lesson) => (
-            <LessonRow
-              key={lesson._id}
-              lesson={lesson}
-              onEdit={(l) => { setEditLesson(l); setShowModal(true); }}
-              onDelete={handleDeleteLesson}
-              deleting={deletingId === lesson._id}
-              isTeacherOrAdmin={isTeacherOrAdmin}
-            />
-          ))
         )}
       </div>
+
+      {/* Tabs — teachers/admins get a Students tab */}
+      {isTeacherOrAdmin && (
+        <div className="flex gap-1 rounded-xl border border-zinc-200 bg-zinc-50 p-1 w-fit">
+          {(["lessons", "students"] as Tab[]).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold capitalize transition-colors ${
+                activeTab === tab ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700"
+              }`}
+            >
+              {tab === "lessons" ? <BiBook className="h-4 w-4" /> : <BiUser className="h-4 w-4" />}
+              {tab}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Tab Content */}
+      {activeTab === "students" && isTeacherOrAdmin ? (
+        <EnrolledStudentsList courseId={courseId} />
+      ) : (
+        <div className="space-y-3">
+          {lessons.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 py-20 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 mb-4">
+                <BiBookOpen className="h-8 w-8 text-zinc-400" />
+              </div>
+              <h3 className="text-base font-semibold text-zinc-800">No lessons yet</h3>
+              <p className="mt-1 text-sm text-zinc-500">Add the first lesson to this course.</p>
+              {isTeacherOrAdmin && (
+                <button
+                  onClick={() => { setEditLesson(null); setShowModal(true); }}
+                  className="mt-6 flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-zinc-700"
+                >
+                  <BiPlus className="h-4 w-4" /> Add First Lesson
+                </button>
+              )}
+            </div>
+          ) : (
+            lessons.map((lesson) => (
+              <LessonRow
+                key={lesson._id}
+                lesson={lesson}
+                onEdit={(l) => { setEditLesson(l); setShowModal(true); }}
+                onDelete={handleDeleteLesson}
+                deleting={deletingId === lesson._id}
+                isTeacherOrAdmin={isTeacherOrAdmin}
+                isEnrolled={isEnrolled}
+                enrollmentId={enrollmentId}
+                progress={lessonProgress[lesson._id] ?? 0}
+                onProgressUpdate={handleProgressUpdate}
+              />
+            ))
+          )}
+        </div>
+      )}
 
       {/* Lesson Modal */}
       {showModal && (

@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { BiBook, BiRefresh, BiSearch, BiStar } from "react-icons/bi";
+import Link from "next/link";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export type Course = {
   _id: string;
   title: string;
   description?: string;
-  subject?: string;      // from subject_id.subject_name (populated)
-  grade?: string;        // from grade_id.grade_name (populated)
+  subject?: string;
+  grade?: string;
   is_vocational?: boolean;
   thumbnail?: string;
   lessonCount?: number;
@@ -17,14 +18,90 @@ export type Course = {
   grade_id?: { grade_name: string };
 };
 
+// ─── Enroll Button ─────────────────────────────────────────────────────────────
+function EnrollButton({ courseId }: { courseId: string }) {
+  const [enrollment, setEnrollment] = useState<{ _id: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/enrollments?courseId=${courseId}`)
+      .then((r) => r.json())
+      .then((d) => setEnrollment(d.enrollment ?? null))
+      .catch(() => setEnrollment(null))
+      .finally(() => setLoading(false));
+  }, [courseId]);
+
+  const handleEnroll = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/enrollments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Enrollment failed.");
+      setEnrollment(data.enrollment);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDrop = async () => {
+    if (!enrollment) return;
+    if (!confirm("Drop this course? Your progress will be preserved.")) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/enrollments/${enrollment._id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to unenroll.");
+      setEnrollment(null);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading) return <span className="h-7 w-20 animate-pulse rounded-lg bg-zinc-100 block" />;
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      {enrollment ? (
+        <button
+          onClick={handleDrop}
+          disabled={busy}
+          className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors disabled:opacity-50"
+        >
+          {busy ? "…" : "✓ Enrolled"}
+        </button>
+      ) : (
+        <button
+          onClick={handleEnroll}
+          disabled={busy}
+          className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
+        >
+          {busy ? "Enrolling…" : "Enroll"}
+        </button>
+      )}
+      {error && <p className="text-[11px] text-red-500">{error}</p>}
+    </div>
+  );
+}
+
 // ─── Course Card ──────────────────────────────────────────────────────────────
-type CourseCardProps = {
-  course: Course;
-};
+type CourseCardProps = { course: Course };
 
 export const CourseCard = ({ course }: CourseCardProps) => {
+  const { user } = useCurrentUser();
   const subjectName = course.subject ?? course.subject_id?.subject_name;
   const gradeName = course.grade ?? course.grade_id?.grade_name;
+  const isStudent = user?.role === "student";
 
   return (
     <div className="group flex flex-col rounded-xl border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md">
@@ -53,14 +130,10 @@ export const CourseCard = ({ course }: CourseCardProps) => {
           )}
         </div>
 
-        <h3 className="text-sm font-semibold text-zinc-900 leading-snug">
-          {course.title}
-        </h3>
+        <h3 className="text-sm font-semibold text-zinc-900 leading-snug">{course.title}</h3>
 
         {course.description && (
-          <p className="text-xs text-zinc-500 line-clamp-2">
-            {course.description}
-          </p>
+          <p className="text-xs text-zinc-500 line-clamp-2">{course.description}</p>
         )}
 
         <div className="mt-auto flex items-center justify-between pt-3 border-t border-zinc-100">
@@ -70,35 +143,40 @@ export const CourseCard = ({ course }: CourseCardProps) => {
               {course.lessonCount} lessons
             </span>
           )}
+          {isStudent ? (
+            <EnrollButton courseId={course._id} />
+          ) : (
+            <Link
+              href={`/dashboard/courses/${course._id}`}
+              className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-zinc-700 transition-colors ml-auto"
+            >
+              View Course
+            </Link>
+          )}
+        </div>
+        {/* View details link for enrolled students */}
+        {isStudent && (
           <Link
             href={`/dashboard/courses/${course._id}`}
-            className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-zinc-700 transition-colors ml-auto"
+            className="mt-1 text-center text-xs text-zinc-400 hover:text-zinc-700 transition-colors underline underline-offset-2"
           >
-            View Course
+            View Details
           </Link>
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
 // ─── Course List ──────────────────────────────────────────────────────────────
-type FilterState = {
-  search: string;
-  grade: string;
-  subject: string;
-  vocational: boolean;
-};
+type FilterState = { search: string; grade: string; subject: string; vocational: boolean };
 
 const CourseList = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<FilterState>({
-    search: "",
-    grade: "",
-    subject: "",
-    vocational: false,
+    search: "", grade: "", subject: "", vocational: false,
   });
 
   const fetchCourses = useCallback(async () => {
@@ -108,7 +186,6 @@ const CourseList = () => {
       const res = await fetch("/api/courses");
       if (!res.ok) throw new Error("Failed to load courses.");
       const data = await res.json();
-      // Normalize populated fields to flat strings for easier filtering
       const normalized: Course[] = (data.courses ?? []).map((c: Course) => ({
         ...c,
         subject: c.subject ?? c.subject_id?.subject_name,
@@ -132,8 +209,7 @@ const CourseList = () => {
       filters.search &&
       !c.title.toLowerCase().includes(filters.search.toLowerCase()) &&
       !(c.description ?? "").toLowerCase().includes(filters.search.toLowerCase())
-    )
-      return false;
+    ) return false;
     if (filters.grade && c.grade !== filters.grade) return false;
     if (filters.subject && c.subject !== filters.subject) return false;
     if (filters.vocational && !c.is_vocational) return false;
@@ -146,9 +222,7 @@ const CourseList = () => {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-zinc-900">Courses</h1>
-          <p className="text-sm text-zinc-500 mt-0.5">
-            Browse and enroll in available courses
-          </p>
+          <p className="text-sm text-zinc-500 mt-0.5">Browse and enroll in available courses</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-xs text-zinc-500">
@@ -183,11 +257,7 @@ const CourseList = () => {
           className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-300"
         >
           <option value="">All Grades</option>
-          {grades.map((g) => (
-            <option key={g} value={g}>
-              {g}
-            </option>
-          ))}
+          {grades.map((g) => (<option key={g} value={g}>{g}</option>))}
         </select>
         <select
           value={filters.subject}
@@ -195,28 +265,20 @@ const CourseList = () => {
           className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-300"
         >
           <option value="">All Subjects</option>
-          {subjects.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
+          {subjects.map((s) => (<option key={s} value={s}>{s}</option>))}
         </select>
         <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-zinc-700">
           <input
             type="checkbox"
             checked={filters.vocational}
-            onChange={(e) =>
-              setFilters({ ...filters, vocational: e.target.checked })
-            }
+            onChange={(e) => setFilters({ ...filters, vocational: e.target.checked })}
             className="rounded border-zinc-300"
           />
           Vocational only
         </label>
         {(filters.search || filters.grade || filters.subject || filters.vocational) && (
           <button
-            onClick={() =>
-              setFilters({ search: "", grade: "", subject: "", vocational: false })
-            }
+            onClick={() => setFilters({ search: "", grade: "", subject: "", vocational: false })}
             className="text-xs text-zinc-400 hover:text-zinc-700 underline"
           >
             Clear filters
@@ -232,10 +294,8 @@ const CourseList = () => {
         </div>
       ) : error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
-          {error}{" "}
-          <button onClick={fetchCourses} className="underline font-semibold">
-            Retry
-          </button>
+          {error}
+          <button onClick={fetchCourses} className="underline font-semibold ml-2">Retry</button>
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 py-16 text-center">
@@ -248,9 +308,7 @@ const CourseList = () => {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((course) => (
-            <CourseCard key={course._id} course={course} />
-          ))}
+          {filtered.map((course) => (<CourseCard key={course._id} course={course} />))}
         </div>
       )}
     </div>

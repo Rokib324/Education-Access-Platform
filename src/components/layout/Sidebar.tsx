@@ -65,6 +65,12 @@ const NAV_SECTIONS: NavSection[] = [
         roles: ["student", "teacher", "admin"],
       },
       {
+        href: "/dashboard/my-courses",
+        label: "My Courses",
+        icon: <BiVideo className="h-5 w-5" />,
+        roles: ["student"],
+      },
+      {
         href: "/dashboard/lessons",
         label: "My Lessons",
         icon: <BiBookOpen className="h-5 w-5" />,
