@@ -5,8 +5,9 @@ import { motion } from 'framer-motion';
 import { BiTargetLock, BiCheck, BiPlus } from 'react-icons/bi';
 
 const SUGGESTED_INTERESTS = [
-  "Medicine", "Engineering", "Technology", "Business", "Arts", 
-  "Agriculture", "Teaching", "Law", "Nursing", "Design"
+  "Mathematics", "English Language", "Science & Physics", 
+  "History & Arts", "Medicine & Healthcare", "Engineering & Tech", 
+  "Business & Entrepreneurship", "Agriculture", "Law", "Teaching"
 ];
 
 const InterestSelection = () => {
@@ -78,8 +79,8 @@ const InterestSelection = () => {
               onClick={() => toggleInterest(interest)}
               className={`flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-medium transition-all ${
                 isSelected 
-                  ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400 shadow-lg shadow-emerald-500/10' 
-                  : 'border-white/5 bg-white/5 text-zinc-400 hover:border-white/10 hover:bg-white/10'
+                  ? 'border-emerald-500/70 bg-emerald-500/30 text-white shadow-lg shadow-emerald-500/10' 
+                  : 'border-white/20 bg-white/20 text-white hover:border-white/10 hover:bg-white/10'
               }`}
             >
               {isSelected ? <BiCheck className="h-3.5 w-3.5" /> : <BiPlus className="h-3.5 w-3.5" />}

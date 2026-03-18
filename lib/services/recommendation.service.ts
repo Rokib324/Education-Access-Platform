@@ -22,11 +22,28 @@ export async function getInterestBasedRecommendations(studentId: string) {
         return [];
     }
 
-    // 2. Build regex pattern for interests
-    const interestPattern = profile.interests.map(i => i.trim()).join("|");
+    // 2. Expand interests to related keywords for broader matching
+    const interestMap: Record<string, string[]> = {
+        "Medicine & Healthcare": ["Medical", "Doctor", "Healthcare", "Clinic", "Pharmacy", "Medicine", "Nurse", "Nursing", "Anatomy"],
+        "Engineering & Tech": ["Engineer", "Engineering", "Build", "Construct", "Mechanical", "Electrical", "Civil", "Tech", "Software", "Computer", "Coding", "Digital", "IT", "Data"],
+        "Mathematics": ["Math", "Mathematics", "Algebra", "Geometry", "Calculus", "Statistics"],
+        "English Language": ["English", "Grammar", "Literature", "Writing", "Reading", "Poetry"],
+        "Science & Physics": ["Science", "Physics", "Chemistry", "Biology", "Lab", "Scientific", "Experiment"],
+        "History & Arts": ["History", "Historical", "Arts", "Creative", "Design", "Music", "Art", "Painting", "Social Studies"],
+        "Business & Entrepreneurship": ["Entrepreneur", "Startup", "Management", "Finance", "Marketing", "Business", "Economics", "Accounting"],
+        "Agriculture": ["Farm", "Agri", "Crop", "Plant", "Agriculture", "Rural", "Sustainability"],
+        "Law": ["Legal", "Lawyer", "Justice", "Law", "Court", "Rights"],
+        "Teaching": ["Education", "Teacher", "Teaching", "Learning", "Pedagogy", "School"]
+    };
+
+    const expandedInterests = profile.interests.flatMap(i => interestMap[i] || [i]);
+    const uniqueKeywords = Array.from(new Set(expandedInterests));
+    
+    // Build regex pattern that matches any of the keywords
+    const interestPattern = uniqueKeywords.join("|");
     const regex = new RegExp(interestPattern, "i");
 
-    // 3. Find courses matching interests in title or description
+    // 3. Find courses matching expanded interests
     return Course.find({
         $or: [
             { title: { $regex: regex } },
