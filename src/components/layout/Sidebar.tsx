@@ -71,6 +71,12 @@ const NAV_SECTIONS: NavSection[] = [
         roles: ["student"],
       },
       {
+        href: "/dashboard/quizzes",
+        label: "Quizzes",
+        icon: <BiPencil className="h-5 w-5" />,
+        roles: ["student"],
+      },
+      {
         href: "/dashboard/lessons",
         label: "My Lessons",
         icon: <BiBookOpen className="h-5 w-5" />,
@@ -125,6 +131,12 @@ const NAV_SECTIONS: NavSection[] = [
         href: "/dashboard/courses/manage",
         label: "Manage Courses",
         icon: <BiPencil className="h-5 w-5" />,
+        roles: ["teacher", "admin"],
+      },
+      {
+        href: "/dashboard/quizzes/manage",
+        label: "Manage Quizzes",
+        icon: <BiListUl className="h-5 w-5" />,
         roles: ["teacher", "admin"],
       },
       {
