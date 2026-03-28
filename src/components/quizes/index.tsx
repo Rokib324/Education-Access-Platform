@@ -20,11 +20,9 @@ type QuizItem = {
     time_limit_minutes?: number;
     questionCount: number;
     course_id: { _id: string; title: string } | string;
-    lesson_id?: { title: string } | null;
+    lesson_id?: { _id: string; title: string } | null;
     lastAttempt?: { score: number; attempted_at: string } | null;
 };
-
-type EnrolledCourse = { _id: string; course_id: { _id: string; title: string } };
 
 // ─── Score Badge ──────────────────────────────────────────────────────────────
 const ScoreBadge = ({ score, total, pass }: { score: number; total: number; pass: number }) => {
@@ -134,27 +132,12 @@ const QuizList = () => {
         setLoading(true);
         setError(null);
         try {
-            // Get enrolled courses first
-            const enrollRes = await fetch("/api/enrollments");
-            const enrollData = await enrollRes.json();
-            const enrollments: EnrolledCourse[] = enrollData.enrollments ?? [];
-
-            if (enrollments.length === 0) {
-                setQuizzes([]);
-                return;
-            }
-
-            // Fetch quizzes for each enrolled course
-            const allQuizzes: QuizItem[] = [];
-            await Promise.all(
-                enrollments.map(async (e) => {
-                    const courseId = typeof e.course_id === "object" ? e.course_id._id : e.course_id;
-                    const res = await fetch(`/api/quizzes?courseId=${courseId}`);
-                    const data = await res.json();
-                    allQuizzes.push(...(data.quizzes ?? []));
-                })
-            );
-            setQuizzes(allQuizzes);
+            // Single call: returns quizzes for all enrolled courses,
+            // already enriched with lastAttempt + populated course/lesson titles
+            const res = await fetch("/api/quizzes/student");
+            if (!res.ok) throw new Error("Failed to fetch quizzes.");
+            const data = await res.json();
+            setQuizzes(data.quizzes ?? []);
         } catch (_) {
             setError("Failed to load quizzes.");
         } finally {
